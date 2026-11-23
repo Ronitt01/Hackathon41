@@ -9,7 +9,7 @@ import { errorMessage } from "@/lib/supabase/auth";
 
 export type CrewMember = { id: string; display_name: string; role: string; status: string; task_role: string | null };
 
-export const CREW_COLUMNS = "id, display_name, role, status, task_role";
+import { CREW_COLUMNS } from "./columns";
 export const SELECT = "h-11 w-full rounded-lg border border-input bg-card px-2.5 text-base";
 const PRESETS = ["Treasurer", "Navigator", "Food scout", "Stay hunter", "Memory keeper"];
 

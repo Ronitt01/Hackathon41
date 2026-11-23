@@ -10,7 +10,7 @@ import { createClient } from "@/lib/supabase/client";
 import { errorMessage } from "@/lib/supabase/auth";
 import type { CrewMember } from "./roles";
 
-export const PACKING_COLUMNS = "id, name, member_id";
+import { PACKING_COLUMNS } from "./columns";
 
 /** S-2 who-brings-what: claim items, see who claimed them, spot doubles. Live via Realtime. */
 export function Packing({ tripId, meId, members, initial }: { tripId: string; meId: string; members: CrewMember[]; initial: PackingRow[] }) {

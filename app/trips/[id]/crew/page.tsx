@@ -1,8 +1,9 @@
 import { PaintedBoard } from "@/components/kafila/painted-board";
-import { Packing, PACKING_COLUMNS } from "@/components/crew/packing";
+import { CREW_COLUMNS, PACKING_COLUMNS, TASK_COLUMNS } from "@/components/crew/columns";
+import { Packing } from "@/components/crew/packing";
 import { ParentLink } from "@/components/crew/parent-link";
-import { CREW_COLUMNS, Roles, type CrewMember } from "@/components/crew/roles";
-import { TASK_COLUMNS, Tasks } from "@/components/crew/tasks";
+import { Roles, type CrewMember } from "@/components/crew/roles";
+import { Tasks } from "@/components/crew/tasks";
 import { errorMessage } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
 

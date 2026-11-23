@@ -10,7 +10,7 @@ import { errorMessage } from "@/lib/supabase/auth";
 import { SELECT, type CrewMember } from "./roles";
 
 export type Task = { id: string; title: string; owner_member: string | null; done: boolean };
-export const TASK_COLUMNS = "id, title, owner_member, done";
+import { TASK_COLUMNS } from "./columns";
 
 /** S-1 task split: add, assign, tick off, delete. Live for everyone via Realtime. */
 export function Tasks({ tripId, members, initial }: { tripId: string; members: CrewMember[]; initial: Task[] }) {
