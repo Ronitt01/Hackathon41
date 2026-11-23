@@ -1,12 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { ArrowDown, ArrowUp, BedDouble, Bus, Compass, MapPin, Pencil, Pin, Plus, Trash2, Users, Utensils, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { inr } from "@/lib/money";
 import { createClient } from "@/lib/supabase/client";
 import { errorMessage } from "@/lib/supabase/auth";
 import { byPosition, dayCount, dayLabel, positionUpdates, STOP_COLUMNS } from "./days";
 import { KINDS, StopForm, type StopFields } from "./stop-form";
+
+const KIND_ICONS = { activity: Compass, food: Utensils, travel: Bus, stay: BedDouble, meetup: Users } as const;
 
 export type Stop = StopFields & { id: string; day: number; position: number; locked: boolean };
 
@@ -83,23 +86,24 @@ export function Itinerary({
   }
 
   return (
-    <div className="grid gap-6">
-      <p className="text-sm">
-        Plan total <strong>{inr(total)}</strong>
-        {activeMembers > 0 && <> · about <strong>{inr(Math.round(total / activeMembers))}</strong> per person</>}
+    <div className="grid gap-5">
+      <p className="text-[13px] text-muted-foreground">
+        Plan total <strong className="tabular font-semibold text-ink">{inr(total)}</strong>
+        {activeMembers > 0 && <> · about <strong className="tabular font-semibold text-ink">{inr(Math.round(total / activeMembers))}</strong> per person</>}
       </p>
-      {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
+      {error && <p role="alert" className="text-[13px] text-destructive">{error}</p>}
 
       {Array.from({ length: days }, (_, i) => i + 1).map((day) => {
         const dayStops = stopsOn(day);
         return (
-          <section key={day} className="grid gap-3" aria-labelledby={`day-${day}`}>
-            <h3 id={`day-${day}`} className="font-semibold">{dayLabel(day, startDate)}</h3>
-            {dayStops.length === 0 && <p className="text-sm text-muted-foreground">Nothing planned yet. Add the first stop.</p>}
-            <ol className="grid gap-2">
-              {dayStops.map((s, i) =>
-                editing === s.id ? (
-                  <li key={s.id}>
+          <section key={day} className="grid" aria-labelledby={`day-${day}`}>
+            <h3 id={`day-${day}`} className="mb-1 text-[15px] leading-snug font-bold">{dayLabel(day, startDate, true)}</h3>
+            {dayStops.length === 0 && <p className="border-t py-2 text-[13px] text-muted-foreground">Nothing planned yet. Add the first stop.</p>}
+            <ol className="grid">
+              {dayStops.map((s, i) => {
+                const Kind = KIND_ICONS[s.kind as keyof typeof KIND_ICONS] ?? MapPin;
+                return editing === s.id ? (
+                  <li key={s.id} className="border-t py-2">
                     <StopForm
                       idPrefix={`edit-${s.id}`}
                       initial={s}
@@ -112,59 +116,80 @@ export function Itinerary({
                     />
                   </li>
                 ) : (
-                  <li key={s.id} className="grid gap-2 rounded-lg border px-3 py-3">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="grid gap-0.5">
-                        <span className="font-medium">
-                          {s.starts_at && <span className="mr-2 tabular-nums text-muted-foreground">{s.starts_at.slice(0, 5)}</span>}
-                          {s.title}
-                        </span>
-                        <span className="text-sm text-muted-foreground">
-                          {KINDS[s.kind as keyof typeof KINDS] ?? s.kind}
-                          {s.location_name && ` · ${s.location_name}`}
-                          {s.locked && " · 📌 kept"}
-                        </span>
-                      </div>
-                      {s.cost_paise > 0 && <span className="text-sm tabular-nums">{inr(s.cost_paise)}</span>}
+                  <li key={s.id} className="grid grid-cols-[48px_1fr_auto] items-start gap-x-2.5 border-t pt-2">
+                    <span className="tabular font-semibold">{s.starts_at?.slice(0, 5)}</span>
+                    <div className="min-w-0">
+                      <p className="leading-snug font-semibold break-words">{s.title}</p>
+                      {(s.location_name || s.cost_paise > 0 || s.locked) && (
+                        <p className="text-[13px] text-muted-foreground">
+                          {[s.location_name, s.cost_paise > 0 && `${inr(s.cost_paise)} for the group`, s.locked && "Kept"].filter(Boolean).join(" · ")}
+                        </p>
+                      )}
                     </div>
-                    <div className="flex flex-wrap items-center gap-1">
-                      <Button variant="ghost" className="h-11 w-11" aria-label={`Move ${s.title} up`} disabled={i === 0} onClick={() => move(day, i, -1)}>↑</Button>
-                      <Button variant="ghost" className="h-11 w-11" aria-label={`Move ${s.title} down`} disabled={i === dayStops.length - 1} onClick={() => move(day, i, 1)}>↓</Button>
-                      <Button variant="ghost" className="h-11" onClick={() => setEditing(s.id)}>Edit</Button>
-                      <Button variant="ghost" className="h-11 text-destructive" onClick={() => remove(s)}>Delete</Button>
-                      <label className="ml-auto flex h-11 items-center gap-2 text-sm">
-                        <input
-                          type="checkbox"
-                          checked={s.locked}
-                          onChange={(e) => act((supabase) => Promise.all([supabase.from("stops").update({ locked: e.target.checked }).eq("id", s.id)]))}
-                          className="size-4"
-                        />
-                        Keep when AI re-plans
-                      </label>
+                    <span className="flex items-center gap-1 rounded-full border border-ink bg-card px-2.5 text-[13px] leading-5 font-semibold">
+                      <Kind aria-hidden strokeWidth={1.8} className="size-4" />
+                      {KINDS[s.kind as keyof typeof KINDS] ?? s.kind}
+                    </span>
+                    <div className="col-span-2 col-start-2 -ml-3 flex items-center">
+                      <IconButton label={`Move ${s.title} up`} disabled={i === 0} onClick={() => move(day, i, -1)} icon={ArrowUp} />
+                      <IconButton label={`Move ${s.title} down`} disabled={i === dayStops.length - 1} onClick={() => move(day, i, 1)} icon={ArrowDown} />
+                      <IconButton label={`Edit ${s.title}`} onClick={() => setEditing(s.id)} icon={Pencil} />
+                      <IconButton label={`Delete ${s.title}`} onClick={() => remove(s)} icon={Trash2} className="text-destructive hover:text-destructive" />
+                      <Button
+                        variant="ghost"
+                        aria-pressed={s.locked}
+                        onClick={() => act((supabase) => Promise.all([supabase.from("stops").update({ locked: !s.locked }).eq("id", s.id)]))}
+                        className={`ml-auto px-3 text-[13px] ${s.locked ? "bg-truck-green-ink text-white hover:bg-truck-green-ink/90 hover:text-white" : "text-muted-foreground"}`}
+                      >
+                        <Pin aria-hidden strokeWidth={1.8} className="size-4" />
+                        Keep<span className="sr-only"> {s.title} when AI re-plans</span>
+                      </Button>
                     </div>
                   </li>
-                ),
-              )}
+                );
+              })}
             </ol>
-            {editing === `add-${day}` ? (
-              <StopForm
-                idPrefix={`add-${day}`}
-                submitLabel="Add stop"
-                onCancel={() => setEditing(null)}
-                onSave={async (fields) => {
-                  const row = { ...fields, trip_id: tripId, plan_id: planId, day, position: dayStops.length };
-                  await run((supabase) => Promise.all([supabase.from("stops").insert(row)]));
-                  setEditing(null);
-                }}
-              />
-            ) : (
-              <Button variant="outline" className="h-11" onClick={() => setEditing(`add-${day}`)}>+ Add stop</Button>
-            )}
+            <div className="border-t pt-2">
+              {editing === `add-${day}` ? (
+                <StopForm
+                  idPrefix={`add-${day}`}
+                  submitLabel="Add stop"
+                  onCancel={() => setEditing(null)}
+                  onSave={async (fields) => {
+                    const row = { ...fields, trip_id: tripId, plan_id: planId, day, position: dayStops.length };
+                    await run((supabase) => Promise.all([supabase.from("stops").insert(row)]));
+                    setEditing(null);
+                  }}
+                />
+              ) : (
+                <Button variant="outline" className="w-full bg-card" onClick={() => setEditing(`add-${day}`)}>
+                  <Plus aria-hidden strokeWidth={1.8} className="size-[18px]" />
+                  Add stop
+                </Button>
+              )}
+            </div>
           </section>
         );
       })}
 
-      <Button variant="secondary" className="h-11" onClick={() => setMinDays(days + 1)}>+ Add day</Button>
+      <Button variant="outline" className="bg-card" onClick={() => setMinDays(days + 1)}>
+        <Plus aria-hidden strokeWidth={1.8} className="size-[18px]" />
+        Add day
+      </Button>
     </div>
+  );
+}
+
+/** Compact 44px icon action for a stop row. */
+function IconButton({
+  label,
+  icon: Icon,
+  className = "",
+  ...props
+}: { label: string; icon: LucideIcon; className?: string; disabled?: boolean; onClick: () => void }) {
+  return (
+    <Button variant="ghost" aria-label={label} className={`size-11 px-0 text-muted-foreground ${className}`} {...props}>
+      <Icon aria-hidden strokeWidth={1.8} className="size-[18px]" />
+    </Button>
   );
 }

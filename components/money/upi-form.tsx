@@ -27,14 +27,14 @@ export function UpiForm({ meId, current, onChange }: { meId: string; current: st
 
   return (
     <form onSubmit={onSubmit} className="grid gap-2">
-      <Label htmlFor="upi-vpa">UPI ID</Label>
+      <Label htmlFor="upi-vpa" className="sr-only">UPI ID</Label>
       <div className="flex gap-2">
-        <Input id="upi-vpa" value={vpa} onChange={(e) => setVpa(e.target.value)} placeholder="name@okicici" autoCapitalize="none" autoComplete="off" className="h-11" />
-        <Button type="submit" className="h-11" disabled={pending || vpa.trim() === (current ?? "")}>
+        <Input id="upi-vpa" value={vpa} onChange={(e) => setVpa(e.target.value)} placeholder="name@okicici" autoCapitalize="none" autoComplete="off" className="h-11 min-w-0 flex-1 bg-card text-[15px]" />
+        <Button type="submit" className="h-11 px-5 text-[15px]" disabled={pending || vpa.trim() === (current ?? "")}>
           {pending ? "Saving…" : "Save"}
         </Button>
       </div>
-      {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
+      {error && <p role="alert" className="text-[13px] text-destructive">{error}</p>}
     </form>
   );
 }

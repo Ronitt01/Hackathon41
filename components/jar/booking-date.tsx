@@ -43,8 +43,8 @@ export function BookingDate({ tripId, bookingDate, isOrganizer }: { tripId: stri
           {pending ? "Saving…" : "Save"}
         </Button>
       </div>
-      {!bookingDate && <p className="text-sm text-muted-foreground">Set it so everyone&apos;s Jar knows the deadline.</p>}
-      {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
+      {!bookingDate && <p className="text-[13px] text-muted-foreground">Set it so everyone&apos;s Jar knows the deadline.</p>}
+      {error && <p role="alert" className="text-[13px] text-destructive">{error}</p>}
     </form>
   );
 }

@@ -8,7 +8,7 @@ import { inr, toPaise } from "@/lib/money";
 import { errorMessage } from "@/lib/supabase/auth";
 import { TAGS } from "@/lib/tags";
 
-export const KINDS = { activity: "🎯 Activity", food: "🍽️ Food", travel: "🚌 Travel", stay: "🏨 Stay", meetup: "👋 Meetup" } as const;
+export const KINDS = { activity: "Activity", food: "Food", travel: "Travel", stay: "Stay", meetup: "Meetup" } as const;
 
 export type StopFields = {
   title: string;
@@ -63,7 +63,7 @@ export function StopForm({
   }
 
   return (
-    <form onSubmit={onSubmit} className="grid gap-3 rounded-lg border p-3">
+    <form onSubmit={onSubmit} className="grid gap-3 rounded-xl border bg-card p-3.5">
       <div className="grid gap-2">
         <Label htmlFor={id("title")}>What</Label>
         <Input id={id("title")} name="title" required maxLength={120} defaultValue={initial?.title} placeholder="Sunset at Vagator" className="h-11" />
@@ -79,7 +79,7 @@ export function StopForm({
             id={id("kind")}
             name="kind"
             defaultValue={initial?.kind ?? "activity"}
-            className="h-11 rounded-lg border border-input bg-transparent px-2.5 text-base md:text-sm dark:bg-input/30"
+            className="h-11 rounded-lg border border-input bg-card px-2.5"
           >
             {Object.entries(KINDS).map(([value, label]) => (
               <option key={value} value={value}>{label}</option>
@@ -102,22 +102,25 @@ export function StopForm({
           className="h-11"
         />
       </div>
-      <fieldset className="grid gap-1">
+      <fieldset>
         <legend className="mb-1 text-sm font-medium">Tags (optional)</legend>
-        <div className="grid grid-cols-2 gap-x-3">
+        <div className="flex flex-wrap gap-x-2">
           {TAGS.map((t) => (
-            <label key={t.id} className="flex h-11 items-center gap-2 text-sm">
-              <input type="checkbox" name="tags" value={t.id} defaultChecked={initial?.tags.includes(t.id)} className="size-4" />
-              {t.label}
+            // The 44px label is the tap target; the pill inside is the chip. Checked = the one live colour.
+            <label key={t.id} className="flex h-11 cursor-pointer items-center">
+              <input type="checkbox" name="tags" value={t.id} defaultChecked={initial?.tags.includes(t.id)} className="peer sr-only" />
+              <span className="rounded-full border border-ink bg-card px-3 py-0.5 text-[13px] leading-5 font-semibold peer-checked:border-truck-green-ink peer-checked:bg-truck-green-ink peer-checked:text-white peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-truck-green">
+                {t.label}
+              </span>
             </label>
           ))}
         </div>
       </fieldset>
       <div className="flex gap-2">
-        <Button type="submit" disabled={pending} className="h-11 flex-1">{pending ? "Saving…" : submitLabel}</Button>
-        <Button type="button" variant="outline" onClick={onCancel} className="h-11">Cancel</Button>
+        <Button type="submit" disabled={pending} className="flex-1">{pending ? "Saving…" : submitLabel}</Button>
+        <Button type="button" variant="outline" onClick={onCancel} className="bg-card">Cancel</Button>
       </div>
-      {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
+      {error && <p role="alert" className="text-[13px] text-destructive">{error}</p>}
     </form>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Check, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 /** Opens the phone's share sheet (WhatsApp etc.); falls back to copying the link. */
@@ -23,8 +24,9 @@ export function InviteButton({ code, tripName }: { code: string; tripName: strin
   }
 
   return (
-    <Button type="button" onClick={share} className="h-11 w-full">
-      {copied ? "Link copied ✓" : "Invite friends"}
+    <Button type="button" onClick={share} className="h-11 w-full" aria-live="polite">
+      {copied ? <Check aria-hidden strokeWidth={1.8} className="size-5" /> : <Share2 aria-hidden strokeWidth={1.8} className="size-5" />}
+      {copied ? "Link copied" : "Invite friends"}
     </Button>
   );
 }

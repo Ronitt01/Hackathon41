@@ -39,18 +39,18 @@ export function TripEntryForm(props: Props & { defaultName: string }) {
     <form onSubmit={onSubmit} className="grid gap-4">
       {props.mode === "create" && (
         <div className="grid gap-2">
-          <Label htmlFor="tripName">Trip name</Label>
-          <Input id="tripName" name="tripName" required maxLength={80} placeholder="Goa with friends" className="h-11" />
+          <Label htmlFor="tripName" className="text-[15px] font-semibold">Trip name</Label>
+          <Input id="tripName" name="tripName" required maxLength={80} placeholder="Goa with friends" className="h-11 bg-card" />
         </div>
       )}
       <div className="grid gap-2">
-        <Label htmlFor="name">Your name</Label>
-        <Input id="name" name="name" required maxLength={40} defaultValue={props.defaultName} placeholder="Aarav" className="h-11" />
+        <Label htmlFor="name" className="text-[15px] font-semibold">Your name</Label>
+        <Input id="name" name="name" required maxLength={40} defaultValue={props.defaultName} placeholder="Aarav" className="h-11 bg-card" />
       </div>
-      <Button type="submit" disabled={pending} className="h-11">
+      <Button type="submit" disabled={pending} aria-busy={pending} className="h-11 w-full">
         {pending ? "One sec…" : props.mode === "create" ? "Create trip" : "Join trip"}
       </Button>
-      {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
+      {error && <p role="alert" className="text-[15px] text-destructive">{error}</p>}
     </form>
   );
 }

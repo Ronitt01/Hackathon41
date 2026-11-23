@@ -1,6 +1,7 @@
+import { ArrowLeft, Lock, TriangleAlert } from "lucide-react";
 import Link from "next/link";
 import { PrivateForm } from "@/components/decide/private-form";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { PaintedBoard } from "@/components/kafila/painted-board";
 import { createClient } from "@/lib/supabase/server";
 import type { Prefs } from "@/lib/tags";
 
@@ -21,25 +22,32 @@ export default async function MyPrefsPage({ params }: { params: Promise<{ id: st
     .maybeSingle();
 
   return (
-    <Card>
-      <CardHeader>
-        <Link href={`/trips/${id}/decide`} className="text-sm text-muted-foreground hover:underline">← Back to Decide</Link>
-        <CardTitle>Your budget &amp; preferences 🔒</CardTitle>
-        <CardDescription>Only you will ever see this number. The group only sees whether a plan fits everyone.</CardDescription>
-      </CardHeader>
-      <CardContent className="grid gap-4">
-        {(count ?? 0) < 3 && (
-          <p className="rounded-lg bg-muted px-3 py-2 text-sm">
-            Heads up: with fewer than 3 people in the trip, others could guess your budget from &quot;fits / doesn&apos;t fit&quot;.
-          </p>
-        )}
-        <PrivateForm
-          tripId={id}
-          memberId={me.id}
-          budgetPaise={(mine?.budget_paise as number | null) ?? null}
-          prefs={(mine?.prefs as Prefs | null) ?? {}}
-        />
-      </CardContent>
-    </Card>
+    <>
+      <Link
+        href={`/trips/${id}/decide`}
+        className="-ml-2 inline-flex h-11 w-fit items-center gap-1.5 rounded-lg px-2 text-[15px] font-semibold hover:bg-muted"
+      >
+        <ArrowLeft aria-hidden className="size-[18px]" strokeWidth={1.8} />
+        Back to Decide
+      </Link>
+      <h1 className="-mt-2 text-xl font-bold">Your budget &amp; preferences</h1>
+      <PaintedBoard>Only you see this</PaintedBoard>
+      <p className="flex items-start gap-2.5 text-[15px] font-semibold">
+        <Lock aria-hidden className="mt-0.5 size-5 shrink-0 text-truck-green-ink" strokeWidth={1.8} />
+        Only you will ever see this number. The group only sees whether a plan fits everyone.
+      </p>
+      {(count ?? 0) < 3 && (
+        <p className="flex items-start gap-2.5 rounded-xl border border-border bg-card px-3.5 py-3 text-[15px]">
+          <TriangleAlert aria-hidden className="mt-0.5 size-5 shrink-0" strokeWidth={1.8} />
+          <span>Heads up: with fewer than 3 people in the trip, others could guess your budget from &quot;fits / doesn&apos;t fit&quot;.</span>
+        </p>
+      )}
+      <PrivateForm
+        tripId={id}
+        memberId={me.id}
+        budgetPaise={(mine?.budget_paise as number | null) ?? null}
+        prefs={(mine?.prefs as Prefs | null) ?? {}}
+      />
+    </>
   );
 }

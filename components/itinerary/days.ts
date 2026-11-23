@@ -10,9 +10,13 @@ export function dayCount(start: string | null, end: string | null, stopDays: num
   return Math.max(tripDays, ...stopDays, 1);
 }
 
-/** "Day 3 · 14 Dec" when the trip has a start date, else "Day 3". */
-export function dayLabel(day: number, start: string | null): string {
-  return start ? `Day ${day} · ${shortDate.format(utc(start) + (day - 1) * DAY_MS)}` : `Day ${day}`;
+const weekday = new Intl.DateTimeFormat("en-IN", { weekday: "short", timeZone: "UTC" });
+
+/** "Day 3 · 14 Dec" (or "Day 3 · Sun 14 Dec" with `withWeekday`) when the trip has a start date, else "Day 3". */
+export function dayLabel(day: number, start: string | null, withWeekday = false): string {
+  if (!start) return `Day ${day}`;
+  const date = utc(start) + (day - 1) * DAY_MS;
+  return `Day ${day} · ${withWeekday ? `${weekday.format(date)} ` : ""}${shortDate.format(date)}`;
 }
 
 type Ordered = { id: string; position: number; starts_at: string | null };

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { PaintedBoard } from "@/components/kafila/painted-board";
 import { createClient } from "@/lib/supabase/client";
 import { inr } from "@/lib/money";
 import { loadMoney, type MoneyData } from "./data";
@@ -51,70 +51,66 @@ export function MoneyTab({ tripId, meId, today, initial }: { tripId: string; meI
   const { members, balances } = data;
   const me = members.find((m) => m.id === meId) ?? null;
   const shown = members.filter((m) => m.status !== "dropped" || (balances[m.id] ?? 0) !== 0);
+  const mine = meId ? (balances[meId] ?? 0) : 0;
+  const allSquare = Object.values(balances).every((b) => b === 0);
 
   return (
     <>
-      <Card>
-        <CardHeader>
-          <CardTitle>Balances</CardTitle>
-          <CardDescription>Everything spent and paid back so far.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ul className="grid gap-2" aria-label="Balances">
-            {shown.map((m) => {
-              const b = balances[m.id] ?? 0;
-              return (
-                <li key={m.id} className="flex items-center justify-between gap-3 rounded-lg border px-3 py-3">
-                  <span>
-                    {m.display_name}
-                    {m.id === meId && <span className="ml-1 text-muted-foreground">(you)</span>}
-                  </span>
-                  {b === 0 ? (
-                    <span className="text-muted-foreground">settled up</span>
-                  ) : (
-                    <span className="text-right">
-                      <span className="block text-xs text-muted-foreground">{b > 0 ? "gets back" : "owes"}</span>
-                      <span className={`text-lg font-semibold ${b > 0 ? "text-emerald-700 dark:text-emerald-400" : ""}`}>{inr(Math.abs(b))}</span>
-                    </span>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-        </CardContent>
-      </Card>
+      <PaintedBoard label={allSquare ? "Nobody owes anything" : undefined}>
+        {allSquare ? "All square" : mine > 0 ? `You get back ${inr(mine)}` : mine < 0 ? `You owe ${inr(-mine)}` : "You're square"}
+      </PaintedBoard>
+
+      <section aria-labelledby="balances-h" className="grid gap-2">
+        <div>
+          <h2 id="balances-h" className="text-[17px] leading-snug font-bold">Balances</h2>
+          <p className="text-[13px] text-muted-foreground">Everything spent and paid back so far.</p>
+        </div>
+        <ul className="divide-y rounded-xl border bg-card px-4" aria-label="Balances">
+          {shown.map((m) => {
+            const b = balances[m.id] ?? 0;
+            return (
+              <li key={m.id} className="grid grid-cols-[1fr_auto_auto] items-baseline gap-x-3 py-3">
+                <span className="min-w-0 truncate font-semibold">
+                  {m.display_name}
+                  {m.id === meId && <span className="ml-1 font-normal text-muted-foreground">(you)</span>}
+                </span>
+                {b === 0 ? (
+                  <span className="col-span-2 text-[13px] text-muted-foreground">settled up</span>
+                ) : (
+                  <>
+                    <span className="text-[13px] text-muted-foreground">{b > 0 ? "gets back" : "owes"}</span>
+                    <span className={`tabular text-right font-bold ${b > 0 ? "text-truck-green-ink" : "text-truck-red"}`}>{inr(Math.abs(b))}</span>
+                  </>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      </section>
 
       <SettleUp tripId={tripId} meId={meId} data={data} onChange={refresh} />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Add expense</CardTitle>
-          <CardDescription>Who paid, how much, and who shares it.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ExpenseForm tripId={tripId} meId={meId} members={members} today={today} onChange={refresh} />
-        </CardContent>
-      </Card>
+      <section aria-labelledby="add-expense-h" className="grid gap-4 rounded-xl border bg-card p-4">
+        <div>
+          <h2 id="add-expense-h" className="text-[17px] leading-snug font-bold">Add expense</h2>
+          <p className="text-[13px] text-muted-foreground">Who paid, how much, and who shares it.</p>
+        </div>
+        <ExpenseForm tripId={tripId} meId={meId} members={members} today={today} onChange={refresh} />
+      </section>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Expenses</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ExpenseList expenses={data.expenses} members={members} onChange={refresh} />
-        </CardContent>
-      </Card>
+      <section aria-labelledby="expenses-h" className="grid gap-2">
+        <h2 id="expenses-h" className="text-[17px] leading-snug font-bold">Expenses</h2>
+        <ExpenseList expenses={data.expenses} members={members} onChange={refresh} />
+      </section>
 
       {me && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Your UPI ID</CardTitle>
-            <CardDescription>So friends can pay you back in one tap.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <UpiForm key={me.upi_vpa ?? ""} meId={me.id} current={me.upi_vpa} onChange={refresh} />
-          </CardContent>
-        </Card>
+        <section aria-labelledby="upi-h" className="grid gap-2">
+          <div>
+            <h2 id="upi-h" className="text-[17px] leading-snug font-bold">Your UPI ID</h2>
+            <p className="text-[13px] text-muted-foreground">So friends can pay you back in one tap.</p>
+          </div>
+          <UpiForm key={me.upi_vpa ?? ""} meId={me.id} current={me.upi_vpa} onChange={refresh} />
+        </section>
       )}
     </>
   );

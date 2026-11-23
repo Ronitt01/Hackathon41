@@ -11,12 +11,12 @@ export function GoogleButton({ next }: { next: string }) {
       <Button
         type="button"
         variant="outline"
-        className="h-11"
+        className="h-11 w-full bg-card"
         onClick={() => signInWithGoogle(next).catch((e) => setError(errorMessage(e)))}
       >
         Continue with Google
       </Button>
-      {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
+      {error && <p role="alert" className="text-[15px] text-destructive">{error}</p>}
     </div>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -39,23 +40,26 @@ export function TripDetails({ trip, isOrganizer }: { trip: Details; isOrganizer:
   if (!editing) {
     return (
       <div className="grid gap-3">
-        <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
-          <dt className="text-muted-foreground">Where</dt>
-          <dd>{trip.destination || "Not set"}</dd>
-          <dt className="text-muted-foreground">From</dt>
-          <dd>{show(trip.start_date)}</dd>
-          <dt className="text-muted-foreground">To</dt>
-          <dd>{show(trip.end_date)}</dd>
+        <dl className="grid grid-cols-[64px_1fr] [&>*]:border-t [&>*]:py-2">
+          <dt className="text-[13px] leading-[22px] text-muted-foreground">Where</dt>
+          <dd className="font-semibold">{trip.destination || "Not set"}</dd>
+          <dt className="text-[13px] leading-[22px] text-muted-foreground">From</dt>
+          <dd className="tabular font-semibold">{show(trip.start_date)}</dd>
+          <dt className="text-[13px] leading-[22px] text-muted-foreground">To</dt>
+          <dd className="tabular font-semibold">{show(trip.end_date)}</dd>
         </dl>
         {isOrganizer && (
-          <Button variant="outline" className="h-11" onClick={() => setEditing(true)}>Edit trip details</Button>
+          <Button variant="outline" className="bg-card" onClick={() => setEditing(true)}>
+            <Pencil aria-hidden strokeWidth={1.8} className="size-[18px]" />
+            Edit trip details
+          </Button>
         )}
       </div>
     );
   }
 
   return (
-    <form onSubmit={onSubmit} className="grid gap-3">
+    <form onSubmit={onSubmit} className="grid gap-3 rounded-xl border bg-card p-3.5">
       <div className="grid gap-2">
         <Label htmlFor="destination">Destination</Label>
         <Input id="destination" name="destination" maxLength={80} defaultValue={trip.destination ?? ""} placeholder="Goa" className="h-11" />
@@ -71,10 +75,10 @@ export function TripDetails({ trip, isOrganizer }: { trip: Details; isOrganizer:
         </div>
       </div>
       <div className="flex gap-2">
-        <Button type="submit" disabled={pending} className="h-11 flex-1">{pending ? "Saving…" : "Save"}</Button>
-        <Button type="button" variant="outline" onClick={() => setEditing(false)} className="h-11">Cancel</Button>
+        <Button type="submit" disabled={pending} className="flex-1">{pending ? "Saving…" : "Save"}</Button>
+        <Button type="button" variant="outline" onClick={() => setEditing(false)} className="bg-card">Cancel</Button>
       </div>
-      {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
+      {error && <p role="alert" className="text-[13px] text-destructive">{error}</p>}
     </form>
   );
 }

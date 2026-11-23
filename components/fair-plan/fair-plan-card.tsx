@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Check } from "lucide-react";
+import { PaintedBoard } from "@/components/kafila/painted-board";
+import { ReflectorBar } from "@/components/kafila/reflector-bar";
 import { inr } from "@/lib/money";
 import { createClient } from "@/lib/supabase/server";
-import { MakeFairPlan } from "./make-fair-plan";
 
 const pct = (s: number) => Math.round(s * 100);
 
@@ -15,55 +16,61 @@ export async function FairPlanCard({ tripId, planId }: { tripId: string; planId:
     // RLS: plan_members returns only the viewer's own row.
     planId ? supabase.from("plan_members").select("total_paise, why").eq("plan_id", planId).maybeSingle() : { data: null },
   ]);
-  const scores = ((bars.data ?? []) as (number | string)[]).map(Number);
+  const scores = ((bars.data ?? []) as (number | string)[]).map(Number).sort((a, b) => a - b);
   const own = mine.data as { total_paise: number; why: string | null } | null;
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Fair plan</CardTitle>
-        <CardDescription>Budgets stay private. We pick the plan where the least happy person is as happy as possible.</CardDescription>
-      </CardHeader>
-      <CardContent className="grid gap-5">
-        {scores.length > 0 && (
-          <section className="grid gap-2" aria-labelledby="fair-meter">
-            <h3 id="fair-meter" className="text-sm font-medium">How well it fits everyone (lowest first)</h3>
-            <ul className="grid gap-1.5">
-              {scores.map((s, i) => (
-                <li key={i} className="flex items-center gap-3">
-                  <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-muted" aria-hidden>
-                    <div className="h-full rounded-full bg-primary" style={{ width: `${pct(s)}%` }} />
-                  </div>
-                  <span className="w-10 text-right text-sm tabular-nums">{pct(s)}%</span>
-                </li>
-              ))}
-            </ul>
-            <p className="text-sm">
-              Group minimum <strong className="tabular-nums">{pct(scores[0])}%</strong>
-            </p>
-          </section>
-        )}
-        {own && (
-          <section className="grid gap-2 rounded-lg bg-muted p-3" aria-labelledby="fair-why">
-            <h3 id="fair-why" className="text-sm font-medium">Why this works for you</h3>
-            <ul className="grid gap-1 text-sm">
-              {(own.why ?? "").split("\n").filter(Boolean).map((line) => (
-                <li key={line}>✓ {line}</li>
-              ))}
-            </ul>
-            <p className="text-sm">
-              Your estimated cost <strong>{inr(own.total_paise)}</strong>
-            </p>
-          </section>
-        )}
-        {(count ?? 0) < 2 && (
-          <p className="text-sm text-muted-foreground">
-            Plans with fewer than 2 options use what&apos;s in Decide —{" "}
-            <Link href={`/trips/${tripId}/decide`} className="underline">add options there first</Link>.
+    <>
+      {scores.length > 0 ? ( // scores exist only once a fair plan was computed; a trip's starter plan has none
+        <PaintedBoard label="Fair plan">Fits everyone&apos;s budget</PaintedBoard>
+      ) : (
+        <section className="grid gap-1" aria-labelledby="fair-plan">
+          <h2 id="fair-plan" className="text-[17px] leading-snug font-bold">Fair plan</h2>
+          <p className="text-muted-foreground">
+            Budgets stay private. We pick the plan where the least happy person is as happy as possible.
           </p>
-        )}
-        <MakeFairPlan tripId={tripId} />
-      </CardContent>
-    </Card>
+        </section>
+      )}
+
+      {scores.length > 0 && (
+        <section className="grid gap-2" aria-labelledby="fair-meter">
+          <h2 id="fair-meter" className="text-[15px] leading-snug font-bold">How well it fits everyone</h2>
+          <ul className="grid grid-cols-[104px_1fr_40px] items-center gap-x-2 gap-y-1.5">
+            {scores.map((s, i) => (
+              <li key={i} className="col-span-3 grid grid-cols-subgrid items-center">
+                <span className="text-[13px] font-bold">{i === 0 && "Group minimum"}</span>
+                <ReflectorBar value={pct(s)} index={i} label={i === 0 ? "Group minimum" : `Friend ${i + 1} of ${scores.length}`} />
+                <span className="tabular text-right text-[13px] font-semibold">{pct(s)}%</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {own && (
+        <section className="rounded-xl border bg-card px-3.5 py-3" aria-labelledby="fair-why">
+          <h2 id="fair-why" className="mb-2 text-[15px] leading-snug font-bold">Why this works for you</h2>
+          <ul className="grid gap-1">
+            {(own.why ?? "").split("\n").filter(Boolean).map((line) => (
+              <li key={line} className="flex items-start gap-2">
+                <Check aria-hidden strokeWidth={1.8} className="mt-0.5 size-4 shrink-0 text-truck-green-ink" />
+                {line}
+              </li>
+            ))}
+          </ul>
+          <p className="mt-2.5 flex items-baseline justify-between border-t pt-2">
+            <span className="text-muted-foreground">Your share</span>
+            <strong className="tabular text-[22px] font-bold">{inr(own.total_paise)}</strong>
+          </p>
+        </section>
+      )}
+
+      {(count ?? 0) < 2 && (
+        <p className="text-[13px] text-muted-foreground">
+          Plans with fewer than 2 options use what&apos;s in Decide —{" "}
+          <Link href={`/trips/${tripId}/decide`} className="font-semibold text-ink underline">add options there first</Link>.
+        </p>
+      )}
+    </>
   );
 }

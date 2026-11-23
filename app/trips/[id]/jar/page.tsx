@@ -1,7 +1,7 @@
 import { BookingDate } from "@/components/jar/booking-date";
 import { JarForm } from "@/components/jar/jar-form";
 import { MyJar, type Deposit, type Jar } from "@/components/jar/my-jar";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Lock } from "lucide-react";
 import { streakWeeks, weeksLeft } from "@/lib/jar";
 import { errorMessage } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
@@ -30,7 +30,7 @@ export default async function JarPage({ params }: { params: Promise<{ id: string
       ])
     : [];
   const error = trip.error ?? me.error ?? readiness.error ?? jar?.error ?? deposits?.error ?? share?.error;
-  if (error) return <p role="alert" className="text-sm text-destructive">{errorMessage(error)}</p>;
+  if (error) return <p role="alert" className="text-[13px] text-destructive">{errorMessage(error)}</p>;
   if (!meId || !trip.data) return <p className="text-muted-foreground">Join this trip to start a Jar.</p>;
 
   // bigint columns can arrive as strings; money maths needs exact integers
@@ -44,48 +44,52 @@ export default async function JarPage({ params }: { params: Promise<{ id: string
   const weeks = bookingDate ? weeksLeft(today, bookingDate) : null;
   const ready = (readiness.data as { on_track: number; total: number }[] | null)?.[0];
 
-  return (
+  const group = (
+    <section aria-labelledby="jar-group" className="grid gap-1 border-t pt-3">
+      <h2 id="jar-group" className="text-[17px] leading-snug font-bold">Group savings</h2>
+      <p className="tabular"><span className="font-bold">{ready?.on_track ?? 0} of {ready?.total ?? 0}</span> on track</p>
+      <p className="flex items-center gap-1.5 text-[13px] text-muted-foreground">
+        <Lock aria-hidden strokeWidth={1.8} className="size-4" />
+        Only you see your amounts
+      </p>
+    </section>
+  );
+  const booking = (
+    <section aria-labelledby="jar-booking" className="grid gap-2 border-t pt-3">
+      <div>
+        <h2 id="jar-booking" className="text-[17px] leading-snug font-bold">Booking day</h2>
+        <p className="text-[13px] text-muted-foreground">Your Jar&apos;s deadline.</p>
+      </div>
+      <BookingDate tripId={id} bookingDate={bookingDate} isOrganizer={me.data?.role === "organizer"} />
+    </section>
+  );
+
+  return myJar ? (
+    <MyJar
+      tripId={id}
+      meId={meId}
+      jar={myJar}
+      deposits={myDeposits}
+      weeks={weeks}
+      streak={streakWeeks(myDeposits.map((d) => istDate(d.created_at)), today)}
+    >
+      {group}
+      {booking}
+    </MyJar>
+  ) : (
     <>
-      <Card>
-        <CardHeader>
-          <CardTitle>Group savings</CardTitle>
-          <CardDescription>Only you see your amounts 🔒</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-lg"><span className="font-semibold">{ready?.on_track ?? 0} of {ready?.total ?? 0}</span> on track</p>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Booking day</CardTitle>
-          <CardDescription>Your Jar&apos;s deadline.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <BookingDate tripId={id} bookingDate={bookingDate} isOrganizer={me.data?.role === "organizer"} />
-        </CardContent>
-      </Card>
-
-      {myJar ? (
-        <MyJar
-          tripId={id}
-          meId={meId}
-          jar={myJar}
-          deposits={myDeposits}
-          weeks={weeks}
-          streak={streakWeeks(myDeposits.map((d) => istDate(d.created_at)), today)}
-        />
-      ) : (
-        <Card>
-          <CardHeader>
-            <CardTitle>Start my Jar 🔒</CardTitle>
-            <CardDescription>Save a little every week so the trip is paid for by booking day. Only you see your amounts.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <JarForm tripId={id} meId={meId} saved={0} weeks={weeks} goal={planShare} weekly={null} />
-          </CardContent>
-        </Card>
-      )}
+      <section aria-labelledby="jar-start" className="grid gap-3 rounded-xl border bg-card p-4">
+        <div>
+          <h2 id="jar-start" className="flex items-center gap-1.5 text-[17px] leading-snug font-bold">
+            Start my Jar
+            <Lock aria-hidden strokeWidth={1.8} className="size-4" />
+          </h2>
+          <p className="text-[13px] text-muted-foreground">Save a little every week so the trip is paid for by booking day. Only you see your amounts.</p>
+        </div>
+        <JarForm tripId={id} meId={meId} saved={0} weeks={weeks} goal={planShare} weekly={null} />
+      </section>
+      {group}
+      {booking}
     </>
   );
 }

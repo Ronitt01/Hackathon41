@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
+import { LoaderCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 
@@ -9,8 +10,8 @@ const STEPS = ["Checking everyone's budget…", "Balancing preferences…", "Pic
 const NO_FIT = "No plan fits everyone's budget yet. Try fewer days or a cheaper stay, then make a fair plan again.";
 const NO_OPTIONS = "Add a few places, food spots or stays in Decide first, then make a fair plan.";
 
-/** A-1: the "Make a fair plan" button. Also refreshes this phone when anyone saves a new plan. */
-export function MakeFairPlan({ tripId }: { tripId: string }) {
+/** A-1: the "Make a fair plan" button, pinned above the tab bar. Also refreshes this phone when anyone saves a new plan. */
+export function MakeFairPlan({ tripId, again = false }: { tripId: string; again?: boolean }) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [refreshing, startTransition] = useTransition();
@@ -18,6 +19,7 @@ export function MakeFairPlan({ tripId }: { tripId: string }) {
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const busy = pending || refreshing;
+  const status = pending ? STEPS[step] : refreshing ? "Loading your plan…" : notice;
 
   useEffect(() => {
     if (!pending) return;
@@ -56,14 +58,19 @@ export function MakeFairPlan({ tripId }: { tripId: string }) {
   }
 
   return (
-    <div className="grid gap-2">
-      <Button type="button" onClick={onClick} disabled={busy} className="h-11">
-        {busy ? "Working on it…" : "✨ Make a fair plan"}
-      </Button>
-      <p role="status" className="min-h-5 text-center text-sm text-muted-foreground">
-        {pending ? STEPS[step] : refreshing ? "Loading your plan…" : notice}
-      </p>
-      {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
-    </div>
+    <>
+      {/* Keeps the last content clear of the pinned bar. */}
+      <div aria-hidden className="h-12" />
+      <div className="fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-10 bg-wash shadow-[0_-8px_16px_var(--wash)]">
+        <div className="mx-auto grid max-w-md gap-1.5 px-4 pt-2 pb-3">
+          <p role="status" className="text-center text-[13px] text-muted-foreground empty:hidden">{status}</p>
+          {error && <p role="alert" className="text-[13px] text-destructive">{error}</p>}
+          <Button type="button" onClick={onClick} disabled={busy} className="h-[50px] w-full rounded-xl text-base font-bold">
+            {busy && <LoaderCircle aria-hidden strokeWidth={1.8} className="size-5 motion-safe:animate-spin" />}
+            {busy ? "Working on it…" : again ? "Make a new fair plan" : "Make a fair plan"}
+          </Button>
+        </div>
+      </div>
+    </>
   );
 }

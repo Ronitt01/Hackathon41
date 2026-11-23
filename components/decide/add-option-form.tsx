@@ -2,16 +2,14 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toPaise } from "@/lib/money";
 import { errorMessage } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/client";
 import { TAGS } from "@/lib/tags";
-import { KIND_LABEL } from "./option-card";
-
-const FIELD = "h-11 w-full rounded-lg border border-input bg-transparent px-2.5 text-base md:text-sm";
+import { cn } from "@/lib/utils";
+import { CHIP, FIELD, KIND_LABEL, SURFACE } from "./option-card";
 
 /** D-1: add an option card with 2–4 aspects people can like one by one. */
 export function AddOptionForm({ tripId, meId, onAdded }: { tripId: string; meId: string; onAdded: () => void }) {
@@ -63,64 +61,68 @@ export function AddOptionForm({ tripId, meId, onAdded }: { tripId: string; meId:
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Add an option</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={onSubmit} className="grid gap-4">
-          <div className="grid gap-2">
-            <Label htmlFor="kind">What is it?</Label>
-            <select id="kind" name="kind" defaultValue="stay" className={FIELD}>
-              {Object.entries(KIND_LABEL).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-            </select>
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="title">Title</Label>
-            <Input id="title" name="title" required maxLength={120} placeholder="Sea-view villa in Anjuna" className="h-11" />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="description">Description (optional)</Label>
-            <textarea id="description" name="description" rows={2} maxLength={1000} className={`${FIELD} h-auto py-2`} />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="price">Total price in ₹ (optional)</Label>
-            <Input id="price" name="price" inputMode="decimal" placeholder="24000" className="h-11" />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="image">Image link (optional)</Label>
-            <Input id="image" name="image" type="url" placeholder="https://…" className="h-11" />
-          </div>
-          <fieldset className="grid gap-2">
-            <legend className="mb-2 text-sm font-medium">Tags</legend>
-            <div className="grid grid-cols-2 gap-1">
-              {TAGS.map((t) => (
-                <Label key={t.id} className="h-11 font-normal">
-                  <input type="checkbox" name="tags" value={t.id} className="size-4" />
+    <section className={cn(SURFACE, "p-4")} aria-labelledby="add-option-title">
+      <h2 id="add-option-title" className="text-[17px] font-bold">Add an option</h2>
+      <form onSubmit={onSubmit} className="mt-4 grid gap-4">
+        <div className="grid gap-2">
+          <Label htmlFor="kind">What is it?</Label>
+          <select id="kind" name="kind" defaultValue="stay" className={FIELD}>
+            {Object.entries(KIND_LABEL).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+          </select>
+        </div>
+        <div className="grid gap-2">
+          <Label htmlFor="title">Title</Label>
+          <Input id="title" name="title" required maxLength={120} placeholder="Sea-view villa in Anjuna" className="h-11 bg-card text-base" />
+        </div>
+        <div className="grid gap-2">
+          <Label htmlFor="description">Description (optional)</Label>
+          <textarea id="description" name="description" rows={2} maxLength={1000} className={`${FIELD} h-auto py-2`} />
+        </div>
+        <div className="grid gap-2">
+          <Label htmlFor="price">Total price in ₹ (optional)</Label>
+          <Input id="price" name="price" inputMode="decimal" placeholder="24000" className="tabular h-11 bg-card text-base" />
+        </div>
+        <div className="grid gap-2">
+          <Label htmlFor="image">Image link (optional)</Label>
+          <Input id="image" name="image" type="url" placeholder="https://…" className="h-11 bg-card text-base" />
+        </div>
+        <fieldset className="grid gap-2">
+          <legend className="mb-2 text-[15px] font-semibold">Tags</legend>
+          <div className="flex flex-wrap gap-x-1.5">
+            {TAGS.map((t) => (
+              // 44px tap target around a 32px chip; checked = green
+              <label key={t.id} className="group flex h-11 cursor-pointer items-center">
+                <input type="checkbox" name="tags" value={t.id} className="peer sr-only" />
+                <span
+                  className={cn(
+                    CHIP,
+                    "h-8 px-3 group-hover:bg-muted peer-checked:border-truck-green-ink peer-checked:bg-truck-green-ink peer-checked:text-white peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-truck-green",
+                  )}
+                >
                   {t.label}
-                </Label>
-              ))}
-            </div>
-          </fieldset>
-          <fieldset className="grid gap-3">
-            <legend className="mb-1 text-sm font-medium">Things to like (2–4)</legend>
-            {[0, 1, 2, 3].map((i) => (
-              <div key={i} className="grid grid-cols-2 gap-2">
-                <div className="grid gap-1">
-                  <Label htmlFor={`aspect${i}`} className="text-xs text-muted-foreground">Aspect {i + 1}{i < 2 ? "" : " (optional)"}</Label>
-                  <Input id={`aspect${i}`} name={`aspect${i}`} maxLength={40} placeholder={["Pool", "Location", "Vibe", "Food"][i]} className="h-11" />
-                </div>
-                <div className="grid gap-1">
-                  <Label htmlFor={`value${i}`} className="text-xs text-muted-foreground">Detail</Label>
-                  <Input id={`value${i}`} name={`value${i}`} maxLength={80} placeholder={["Infinity pool", "5 min to beach", "Chill", "Goan thali"][i]} className="h-11" />
-                </div>
-              </div>
+                </span>
+              </label>
             ))}
-          </fieldset>
-          <Button type="submit" disabled={pending} className="h-11">{pending ? "Adding…" : "Add option"}</Button>
-          {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
-        </form>
-      </CardContent>
-    </Card>
+          </div>
+        </fieldset>
+        <fieldset className="grid gap-3">
+          <legend className="mb-1 text-[15px] font-semibold">Things to like (2–4)</legend>
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className="grid grid-cols-2 gap-2">
+              <div className="grid gap-1">
+                <Label htmlFor={`aspect${i}`} className="text-[13px] font-normal text-muted-foreground">Aspect {i + 1}{i < 2 ? "" : " (optional)"}</Label>
+                <Input id={`aspect${i}`} name={`aspect${i}`} maxLength={40} placeholder={["Pool", "Location", "Vibe", "Food"][i]} className="h-11 bg-card text-base" />
+              </div>
+              <div className="grid gap-1">
+                <Label htmlFor={`value${i}`} className="text-[13px] font-normal text-muted-foreground">Detail</Label>
+                <Input id={`value${i}`} name={`value${i}`} maxLength={80} placeholder={["Infinity pool", "5 min to beach", "Chill", "Goan thali"][i]} className="h-11 bg-card text-base" />
+              </div>
+            </div>
+          ))}
+        </fieldset>
+        <Button type="submit" disabled={pending}>{pending ? "Adding…" : "Add option"}</Button>
+        {error && <p role="alert" className="text-[15px] text-destructive">{error}</p>}
+      </form>
+    </section>
   );
 }

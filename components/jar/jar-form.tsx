@@ -54,7 +54,7 @@ export function JarForm({ tripId, meId, saved, weeks, goal, weekly, onDone }: Pr
       <div className="grid gap-2">
         <Label htmlFor="jar-goal">Goal (₹)</Label>
         <Input id="jar-goal" inputMode="decimal" value={goalText} onChange={(e) => setGoalText(e.target.value)} placeholder="7500" className="h-11" />
-        {goal !== null && weekly === null && <p className="text-sm text-muted-foreground">Your share of the chosen plan.</p>}
+        {goal !== null && weekly === null && <p className="text-[13px] text-muted-foreground">Your share of the chosen plan.</p>}
       </div>
       <div className="grid gap-2">
         <Label htmlFor="jar-weekly">Save each week (₹)</Label>
@@ -67,7 +67,7 @@ export function JarForm({ tripId, meId, saved, weeks, goal, weekly, onDone }: Pr
           className="h-11"
         />
         {suggestion > 0 && (
-          <p className="text-sm text-muted-foreground">
+          <p className="text-[13px] text-muted-foreground">
             Suggested: {inr(suggestion)}/week for {weeks} {weeks === 1 ? "week" : "weeks"}. Leave blank to use it.
           </p>
         )}
@@ -78,7 +78,7 @@ export function JarForm({ tripId, meId, saved, weeks, goal, weekly, onDone }: Pr
           <Button type="button" variant="outline" onClick={onDone} className="h-11">Cancel</Button>
         )}
       </div>
-      {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
+      {error && <p role="alert" className="text-[13px] text-destructive">{error}</p>}
     </form>
   );
 }

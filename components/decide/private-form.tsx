@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -49,38 +50,47 @@ export function PrivateForm({ tripId, memberId, budgetPaise, prefs }: { tripId: 
   }
 
   return (
-    <form onSubmit={onSubmit} className="grid gap-5">
+    <form onSubmit={onSubmit} className="grid gap-6">
       <div className="grid gap-2">
-        <Label htmlFor="budget">Max budget per person (₹)</Label>
-        <Input
-          id="budget"
-          name="budget"
-          inputMode="decimal"
-          placeholder="15000"
-          defaultValue={budgetPaise ? String(budgetPaise / 100) : ""}
-          className="h-11"
-        />
+        <Label htmlFor="budget" className="text-[15px] font-semibold">Max budget per person (₹)</Label>
+        <div className="relative">
+          <span aria-hidden className="pointer-events-none absolute inset-y-0 left-4 flex items-center text-2xl font-bold text-muted-foreground">₹</span>
+          <Input
+            id="budget"
+            name="budget"
+            inputMode="decimal"
+            placeholder="15000"
+            defaultValue={budgetPaise ? String(budgetPaise / 100) : ""}
+            className="tabular h-14 rounded-xl bg-card pl-10 text-2xl font-bold md:text-2xl"
+          />
+        </div>
       </div>
-      {TAGS.map((t) => (
-        <fieldset key={t.id} className="grid gap-2">
-          <legend className="mb-2 text-sm font-medium">{t.label}</legend>
-          <div className="grid grid-cols-3 gap-1 rounded-lg bg-muted p-1">
-            {CHOICES.map((c) => (
-              <Label
-                key={c.value}
-                className="h-11 cursor-pointer justify-center rounded-md text-center text-xs text-muted-foreground has-checked:bg-background has-checked:text-foreground has-checked:shadow-sm has-focus-visible:ring-2 has-focus-visible:ring-ring"
-              >
-                <input type="radio" name={t.id} value={c.value} defaultChecked={(prefs[t.id] ?? 0) === c.value} className="sr-only" />
-                {c.label}
-              </Label>
-            ))}
-          </div>
-        </fieldset>
-      ))}
-      <Button type="submit" disabled={pending} className="h-11">
+      <div className="grid gap-1">
+        <h2 className="text-[17px] font-bold">What you love</h2>
+        <div className="divide-y divide-border border-y border-border">
+          {TAGS.map((t) => (
+            <fieldset key={t.id} className="grid gap-2 py-3">
+              <legend className="mb-2 text-[15px] font-semibold">{t.label}</legend>
+              <div className="grid grid-cols-3 overflow-hidden rounded-lg border border-ink bg-card">
+                {CHOICES.map((c) => (
+                  <Label
+                    key={c.value}
+                    className="h-11 cursor-pointer justify-center border-l border-ink text-center text-[13px] font-semibold first:border-l-0 hover:bg-muted has-checked:bg-truck-green-ink has-checked:text-white has-focus-visible:outline-2 has-focus-visible:-outline-offset-4 has-focus-visible:outline-white"
+                  >
+                    <input type="radio" name={t.id} value={c.value} defaultChecked={(prefs[t.id] ?? 0) === c.value} className="sr-only" />
+                    {c.label}
+                  </Label>
+                ))}
+              </div>
+            </fieldset>
+          ))}
+        </div>
+      </div>
+      <Button type="submit" disabled={pending}>
+        <Lock aria-hidden className="size-[18px]" strokeWidth={1.8} />
         {pending ? "Saving…" : "Save privately"}
       </Button>
-      {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
+      {error && <p role="alert" className="text-[15px] text-destructive">{error}</p>}
     </form>
   );
 }

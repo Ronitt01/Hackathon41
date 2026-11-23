@@ -1,4 +1,3 @@
-import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { WrappedStories } from "@/components/wrapped/stories";
 import { createClient } from "@/lib/supabase/server";
 import { errorMessage } from "@/lib/supabase/auth";
@@ -19,7 +18,7 @@ export default async function WrappedPage({ params }: { params: Promise<{ id: st
     ? await supabase.from("stops").select("day").eq("plan_id", trip.data.active_plan_id)
     : { data: [], error: null };
   const error = trip.error ?? members.error ?? expenses.error ?? options.error ?? reactions.error ?? stops.error;
-  if (error || !trip.data) return <p role="alert" className="text-sm text-destructive">{errorMessage(error)}</p>;
+  if (error || !trip.data) return <p role="alert" className="text-[13px] text-destructive">{errorMessage(error)}</p>;
 
   const input: WrappedInput = {
     trip: trip.data,
@@ -33,12 +32,10 @@ export default async function WrappedPage({ params }: { params: Promise<{ id: st
 
   if (!input.expenses.length && !input.stops.length) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Trip Wrapped</CardTitle>
-          <CardDescription>Your Wrapped fills in as you plan and spend. Add stops in Plan and expenses in Money.</CardDescription>
-        </CardHeader>
-      </Card>
+      <section aria-labelledby="wrapped-empty" className="grid gap-1 rounded-xl border bg-card p-4">
+        <h2 id="wrapped-empty" className="text-[17px] leading-snug font-bold">Trip Wrapped</h2>
+        <p className="text-muted-foreground">Your Wrapped fills in as you plan and spend. Add stops in Plan and expenses in Money.</p>
+      </section>
     );
   }
 

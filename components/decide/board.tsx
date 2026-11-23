@@ -1,13 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Columns2, Flower2, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { errorMessage } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/client";
+import { cn } from "@/lib/utils";
 import { AddOptionForm } from "./add-option-form";
 import { CompareStays } from "./compare-stays";
 import { loadDecide, type DecideData } from "./data";
-import { OptionCard } from "./option-card";
+import { CHIP, OptionCard, toggleClass } from "./option-card";
 
 const FILTERS = [
   { label: "All", kinds: null },
@@ -65,33 +67,47 @@ export function DecideBoard({ tripId, meId, initial }: { tripId: string; meId: s
   return (
     <section className="grid gap-4" aria-label="Options">
       <div className="grid grid-cols-2 gap-2">
-        <Button variant={panel === "add" ? "secondary" : "default"} className="h-11" onClick={() => setPanel(panel === "add" ? null : "add")}>
+        <Button variant={panel === "add" ? "outline" : "default"} className={panel === "add" ? "border-input bg-card" : undefined} onClick={() => setPanel(panel === "add" ? null : "add")}>
+          {panel === "add" ? <X aria-hidden className="size-[18px]" strokeWidth={1.8} /> : <Plus aria-hidden className="size-[18px]" strokeWidth={1.8} />}
           {panel === "add" ? "Close" : "Add an option"}
         </Button>
-        <Button variant="outline" className="h-11" aria-pressed={panel === "compare"} onClick={() => setPanel(panel === "compare" ? null : "compare")}>
+        <Button variant="outline" className={cn(toggleClass(panel === "compare"), "rounded-lg")} aria-pressed={panel === "compare"} onClick={() => setPanel(panel === "compare" ? null : "compare")}>
+          <Columns2 aria-hidden className="size-[18px]" strokeWidth={1.8} />
           Compare stays
         </Button>
       </div>
       {panel === "add" && <AddOptionForm tripId={tripId} meId={meId} onAdded={() => { setPanel(null); refresh(); }} />}
       {panel === "compare" && <CompareStays tripId={tripId} data={data} activeCount={activeCount} refresh={refresh} />}
 
-      <p className="text-sm text-muted-foreground">
-        {myRose
-          ? <>Your Rose 🌹 is on <strong className="text-foreground">{data.options.find((o) => o.id === myRose.option_id)?.title}</strong>.</>
-          : "You have one Rose 🌹 for this trip. Give it to the option you love most."}
+      <p className="flex items-start gap-2 text-[15px] text-muted-foreground">
+        <Flower2 aria-hidden className={cn("mt-0.5 size-[18px] shrink-0", myRose ? "text-truck-green-ink" : "text-ink")} strokeWidth={1.8} />
+        <span>
+          {myRose
+            ? <>Your Rose is on <strong className="font-semibold text-ink">{data.options.find((o) => o.id === myRose.option_id)?.title}</strong>.</>
+            : "You have one Rose for this trip. Give it to the option you love most."}
+        </span>
       </p>
 
-      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1" role="group" aria-label="Filter by kind">
+      <div className="-mx-1 flex flex-wrap" role="group" aria-label="Filter by kind">
         {FILTERS.map((f, i) => (
-          <Button key={f.label} variant={i === filter ? "default" : "outline"} className="h-11 rounded-full px-4" aria-pressed={i === filter} onClick={() => setFilter(i)}>
-            {f.label}
-          </Button>
+          // 44px tap target around a 32px chip
+          <button key={f.label} type="button" className="group flex h-11 shrink-0 items-center px-1 outline-none" aria-pressed={i === filter} onClick={() => setFilter(i)}>
+            <span
+              className={cn(
+                CHIP,
+                "h-8 px-3.5 group-focus-visible:outline-2 group-focus-visible:outline-offset-2 group-focus-visible:outline-truck-green",
+                i === filter ? "border-truck-green-ink bg-truck-green-ink text-white" : "group-hover:bg-muted",
+              )}
+            >
+              {f.label}
+            </span>
+          </button>
         ))}
       </div>
 
-      {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
+      {error && <p role="alert" className="text-[15px] text-destructive">{error}</p>}
       {shown.length === 0 && (
-        <p className="rounded-lg border border-dashed px-3 py-6 text-center text-sm text-muted-foreground">
+        <p className="rounded-xl border border-dashed border-border bg-card px-4 py-8 text-center text-[15px] text-muted-foreground">
           Nothing here yet. Add a stay, a café or a day out, and let the group react.
         </p>
       )}

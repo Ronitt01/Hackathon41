@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { ArrowRight, Check, Smartphone } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { inr } from "@/lib/money";
 import { minimiseTransfers, type Transfer } from "@/lib/settle";
 import { createClient } from "@/lib/supabase/client";
@@ -45,72 +45,77 @@ export function SettleUp({ tripId, meId, data, onChange }: { tripId: string; meI
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Settle up</CardTitle>
-        <CardDescription>The fewest payments to square everyone up.</CardDescription>
-      </CardHeader>
-      <CardContent className="grid gap-4">
-        {updating ? (
-          <p className="text-muted-foreground">Balances are updating…</p>
-        ) : transfers.length === 0 ? (
-          <p className="text-muted-foreground">All square — nobody owes anything.</p>
-        ) : (
-          <ul className="grid gap-3" aria-label="Suggested payments">
-            {transfers.map((t) => {
-              const payee = member(t.to);
-              const vpa = payee?.upi_vpa?.trim() ?? "";
-              const key = `${t.from}>${t.to}`;
-              return (
-                <li key={key} className="grid gap-3 rounded-lg border p-3">
-                  <p>
-                    <span className="font-medium">{name(t.from)}</span> {t.from === meId ? "pay" : "pays"}{" "}
-                    <span className="font-medium">{name(t.to)}</span>{" "}
-                    <span className="text-lg font-semibold">{inr(t.amount)}</span>
-                  </p>
-                  {t.from === meId &&
-                    (isValidVpa(vpa) ? (
-                      <a
-                        href={upiLink({ vpa, name: payee!.display_name, amountPaise: t.amount, note: "Kafila trip settle-up" })}
-                        className={buttonVariants({ className: "h-11 w-full text-base" })}
-                      >
-                        Pay {inr(t.amount)} with UPI
-                      </a>
-                    ) : (
-                      <p className="text-sm text-muted-foreground">Ask {name(t.to)} to add their UPI ID.</p>
-                    ))}
-                  {(t.from === meId || t.to === meId) && (
-                    <Button variant="outline" className="h-11 w-full" disabled={busy === key} onClick={() => record(t)}>
+    <section aria-labelledby="settle-h" className="grid gap-2">
+      <div>
+        <h2 id="settle-h" className="text-[17px] leading-snug font-bold">Settle up</h2>
+        <p className="text-[13px] text-muted-foreground">The fewest payments to square everyone up.</p>
+      </div>
+      {updating ? (
+        <p className="text-muted-foreground" aria-live="polite">Balances are updating…</p>
+      ) : transfers.length === 0 ? (
+        <p className="text-muted-foreground">Nothing to settle right now.</p>
+      ) : (
+        <ul className="divide-y rounded-xl border bg-card px-4" aria-label="Suggested payments">
+          {transfers.map((t) => {
+            const payee = member(t.to);
+            const vpa = payee?.upi_vpa?.trim() ?? "";
+            const key = `${t.from}>${t.to}`;
+            const mine = t.from === meId || t.to === meId;
+            return (
+              <li key={key} className="grid gap-3 py-3">
+                <p className="flex items-baseline justify-between gap-3">
+                  <span className="min-w-0">
+                    <span className="font-semibold">{name(t.from)}</span> {t.from === meId ? "pay" : "pays"}{" "}
+                    <span className="font-semibold">{name(t.to)}</span>
+                  </span>
+                  <span className="tabular shrink-0 font-bold">{inr(t.amount)}</span>
+                </p>
+                {mine && (
+                  <div className="grid grid-cols-[repeat(auto-fit,minmax(9.5rem,1fr))] gap-2">
+                    {t.from === meId &&
+                      (isValidVpa(vpa) ? (
+                        <a href={upiLink({ vpa, name: payee!.display_name, amountPaise: t.amount, note: "Kafila trip settle-up" })} className={buttonVariants({ className: "w-full" })}>
+                          <Smartphone aria-hidden strokeWidth={1.8} className="size-[18px]" />
+                          Pay {inr(t.amount)} with UPI
+                        </a>
+                      ) : (
+                        <p className="self-center text-[13px] text-muted-foreground">Ask {name(t.to)} to add their UPI ID.</p>
+                      ))}
+                    <Button variant="outline" className="w-full bg-card" disabled={busy === key} onClick={() => record(t)}>
+                      <Check aria-hidden strokeWidth={1.8} className="size-[18px]" />
                       {busy === key ? "Saving…" : t.from === meId ? "Mark as paid" : "Mark as received"}
                     </Button>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-        )}
-        {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
+                  </div>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+      {error && <p role="alert" className="text-[13px] text-destructive">{error}</p>}
 
-        {data.settlements.length > 0 && (
-          <div className="grid gap-2">
-            <h3 className="text-sm font-medium">Recent payments</h3>
-            <ul className="grid gap-1 text-sm" aria-label="Recent payments">
-              {data.settlements.map((s) => (
-                <li key={s.id} className="flex justify-between gap-3">
-                  <span>
-                    {name(s.from_member)} → {name(s.to_member)}
-                    {s.kind === "pledge" && <span className="text-muted-foreground"> (pledge)</span>}
-                  </span>
-                  <span className="text-muted-foreground">
-                    {inr(s.amount_paise)}
-                    {s.paid_at && ` · ${shortDate(s.paid_at)}`}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+      {data.settlements.length > 0 && (
+        <div className="mt-2 grid gap-1">
+          <h3 className="text-[15px] font-bold">Recent payments</h3>
+          <ul className="divide-y text-[15px]" aria-label="Recent payments">
+            {data.settlements.map((s) => (
+              <li key={s.id} className="flex items-center justify-between gap-3 py-2">
+                <span className="flex min-w-0 items-center gap-1.5">
+                  {name(s.from_member)}
+                  <ArrowRight aria-hidden strokeWidth={1.8} className="size-4 shrink-0 text-muted-foreground" />
+                  <span className="sr-only">paid</span>
+                  {name(s.to_member)}
+                  {s.kind === "pledge" && <span className="text-muted-foreground"> (pledge)</span>}
+                </span>
+                <span className="tabular shrink-0 text-[13px] text-muted-foreground">
+                  {inr(s.amount_paise)}
+                  {s.paid_at && ` · ${shortDate(s.paid_at)}`}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </section>
   );
 }
