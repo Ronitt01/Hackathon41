@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { InviteButton } from "@/components/invite-button";
 import { MemberList, type Member } from "@/components/member-list";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,15 +14,28 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
   if (!trip) return null; // layout already 404s for non-members
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Who&apos;s in</CardTitle>
-        <CardDescription>Share the link in your group chat. Up to 12 people.</CardDescription>
-      </CardHeader>
-      <CardContent className="grid gap-4">
-        <MemberList tripId={trip.id} initial={(members ?? []) as Member[]} />
-        <InviteButton code={trip.invite_code} tripName={trip.name} />
-      </CardContent>
-    </Card>
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle>Who&apos;s in</CardTitle>
+          <CardDescription>Share the link in your group chat. Up to 12 people.</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-4">
+          <MemberList tripId={trip.id} initial={(members ?? []) as Member[]} />
+          <InviteButton code={trip.invite_code} tripName={trip.name} />
+        </CardContent>
+      </Card>
+
+      <div className="grid grid-cols-2 gap-3">
+        <Link href={`/trips/${trip.id}/jar`} className="grid gap-1 rounded-xl border p-4 hover:bg-muted">
+          <span className="font-medium">Trip Jar</span>
+          <span className="text-sm text-muted-foreground">Save a little every week</span>
+        </Link>
+        <Link href={`/trips/${trip.id}/wrapped`} className="grid gap-1 rounded-xl border p-4 hover:bg-muted">
+          <span className="font-medium">Trip Wrapped</span>
+          <span className="text-sm text-muted-foreground">Your trip, in story cards</span>
+        </Link>
+      </div>
+    </>
   );
 }
