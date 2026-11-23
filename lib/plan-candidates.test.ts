@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { deterministicCandidates, parseAiCandidates, tripDays, type PlanOption, type PlanStop } from "./plan-candidates.ts";
+import { applyTaste, deterministicCandidates, parseAiCandidates, tripDays, type PlanOption, type PlanStop } from "./plan-candidates.ts";
 
 const opt = (id: string, kind: string, pricePaise: number, tags: string[] = []): PlanOption => ({ id, kind, title: id, pricePaise, tags });
 const options = [
@@ -34,6 +34,11 @@ test("deterministic: 3–5 candidates, different stays, locked stop kept, slots 
   // most-liked strategy puts the liked club in; lean strategy has at most one stop per day plus stay + locked
   assert.ok(cs[0].stops.some((s) => s.optionId === "club"));
   assert.ok(cs[1].stops.filter((s) => s.kind !== "stay" && !s.locked).length <= 3);
+});
+
+test("deterministic: a locked split stop keeps its branch", () => {
+  const cs = deterministicCandidates(3, options, {}, [{ ...locked, branch: "A" }]);
+  for (const c of cs) assert.equal(c.stops.find((s) => s.title === "Dudhsagar")?.branch, "A");
 });
 
 test("deterministic: no stays → candidates with no stay; lunch slot prefers food", () => {
@@ -99,4 +104,15 @@ test("parseAiCandidates: drops repeats of locked stops and the model's stay when
   const [c] = parseAiCandidates(raw, 3, options, [lockedStay, lockedFort]);
   assert.equal(c.stayOptionId, "stay-a");
   assert.deepEqual(c.stops.map((s) => s.optionId).sort(), ["beach", "fort", "stay-a"]);
+});
+
+test("applyTaste: loved tags nudge ordering (max 1 like), real reactions kept", () => {
+  const two = [opt("museum", "activity", 10000, ["culture"]), opt("shack", "activity", 10000, ["beach", "nightlife"])];
+  const plain = deterministicCandidates(1, two, {}, []);
+  assert.equal(plain[0].stops[0].optionId, "museum"); // equal popularity & price: original order
+  const boosted = applyTaste({ museum: { likes: 1, roses: 0 } }, two, { beach: 0.75, nightlife: 1 });
+  assert.deepEqual(boosted, { museum: { likes: 1, roses: 0 }, shack: { likes: 1, roses: 0 } });
+  const tasted = applyTaste({}, two, { beach: 0.75 });
+  assert.equal(deterministicCandidates(1, two, tasted, [])[0].stops[0].optionId, "shack");
+  assert.deepEqual(applyTaste({}, two, {}), {});
 });

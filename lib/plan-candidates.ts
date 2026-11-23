@@ -16,6 +16,7 @@ export type PlanStop = {
   optionId: string | null;
   locationName?: string | null;
   locked?: boolean;
+  branch?: "A" | "B" | null; // A-3 split; carried through for locked stops, never sent to Claude
 };
 
 export type Candidate = { stayOptionId: string | null; stops: PlanStop[]; travelPaiseByCity: Record<string, number> };
@@ -150,6 +151,19 @@ export function parseAiCandidates(raw: unknown, days: number, options: PlanOptio
       if (typeof t?.city === "string" && isInt(t.paise)) travel[t.city] = t.paise;
     }
     out.push({ stayOptionId: stayId, stops: withPositions([...stops, ...locked.map((s) => ({ ...s, locked: true }))]), travelPaiseByCity: travel });
+  }
+  return out;
+}
+
+/**
+ * W-2: fold the group's taste from a previous trip (tag → 0.5–1, see lib/taste) into reaction counts as fractional
+ * likes, so candidate ordering leans towards what the group rated highly. Capped at 1 like per option: a nudge, not a vote.
+ */
+export function applyTaste(reactions: ReactionCounts, options: PlanOption[], weights: Record<string, number>): ReactionCounts {
+  const out: ReactionCounts = { ...reactions };
+  for (const o of options) {
+    const boost = Math.min(1, o.tags.reduce((sum, t) => sum + (weights[t] ?? 0), 0));
+    if (boost > 0) out[o.id] = { likes: (reactions[o.id]?.likes ?? 0) + boost, roses: reactions[o.id]?.roses ?? 0 };
   }
   return out;
 }

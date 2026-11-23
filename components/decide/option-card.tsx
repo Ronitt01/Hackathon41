@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CircleAlert, CircleCheck, Flower2, Heart, MessageCircle, Wallet } from "lucide-react";
+import { Ban, CircleAlert, CircleCheck, Flower2, Heart, MessageCircle, Wallet } from "lucide-react";
 import { ReflectorBar } from "@/components/kafila/reflector-bar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,12 +36,16 @@ type Props = {
   myRose: Reaction | undefined;
   activeCount: number;
   refresh: () => void;
+  /** D-4: vetoes I have left (0 = none). */
+  vetoesLeft: number;
 };
 
-export function OptionCard({ option: o, data, names, meId, tripId, myRose, activeCount, refresh }: Props) {
+export function OptionCard({ option: o, data, names, meId, tripId, myRose, activeCount, refresh, vetoesLeft }: Props) {
+  const [confirmVeto, setConfirmVeto] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const vetoed = !!o.vetoed_at;
+  const decided = data.decisions.some((d) => d.locked_option_id === o.id); // a lock is final: no veto
   const aspects = data.aspects.filter((a) => a.option_id === o.id);
   const comments = data.comments.filter((c) => c.option_id === o.id);
   const roses = reactionsOn(data.reactions, o.id, null, "rose");
@@ -78,6 +82,22 @@ export function OptionCard({ option: o, data, names, meId, tripId, myRose, activ
     });
   }
 
+  async function veto(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const showName = new FormData(e.currentTarget).get("showName") === "on";
+    await act(async () => {
+      const res = await fetch(`/api/trips/${tripId}/options/${o.id}/veto`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ showName }),
+      });
+      if (res.ok) return { error: null };
+      const body = (await res.json().catch(() => null)) as { error?: string } | null;
+      return { error: { message: body?.error } };
+    });
+    setConfirmVeto(false);
+  }
+
   async function onComment(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const formEl = e.currentTarget;
@@ -96,16 +116,17 @@ export function OptionCard({ option: o, data, names, meId, tripId, myRose, activ
   const roseHere = myRose?.option_id === o.id;
 
   return (
-    <article className={cn(SURFACE, "overflow-hidden", vetoed && "opacity-60 grayscale")}>
+    <article className={cn(SURFACE, "overflow-hidden", vetoed && "bg-muted")}>
       {o.image_url && (
         // eslint-disable-next-line @next/next/no-img-element -- any user-pasted URL; next/image needs allow-listed hosts
-        <img src={o.image_url} alt="" className="h-40 w-full object-cover" />
+        <img src={o.image_url} alt="" className={cn("h-40 w-full object-cover", vetoed && "grayscale")} />
       )}
       <div className="grid gap-3 p-4">
         <header className="grid gap-1.5">
           <div className="flex flex-wrap gap-1.5">
             <span className={CHIP}>{KIND_LABEL[o.kind] ?? o.kind}</span>
-            {vetoed && <span className={cn(CHIP, "border-truck-red text-truck-red")}>Vetoed</span>}
+            {vetoed && <span className={cn(CHIP, "border-truck-red text-truck-red")}>{o.vetoed_by_name ? `Vetoed by ${o.vetoed_by_name}` : "Vetoed"}</span>}
+            {vetoed && !o.vetoed_by_name && data.myVetoes.includes(o.id) && <span className={CHIP}>Your veto, only you see this</span>}
           </div>
           <h3 className="text-[17px] leading-snug font-bold">{o.title}</h3>
           {o.price_paise != null && (
@@ -193,6 +214,31 @@ export function OptionCard({ option: o, data, names, meId, tripId, myRose, activ
               {roseHere ? "Your Rose" : myRose ? "Move Rose here" : "Give Rose"}
             </Button>
           </div>
+        )}
+        {!vetoed && !decided && !confirmVeto && (
+          <Button variant="outline" className="h-11 border-input bg-card" disabled={pending || vetoesLeft === 0} onClick={() => setConfirmVeto(true)}>
+            <Ban aria-hidden className="size-[18px]" strokeWidth={1.8} />
+            {vetoesLeft === 0 ? "No vetoes left" : "Veto"}
+          </Button>
+        )}
+        {!vetoed && !decided && confirmVeto && (
+          <form onSubmit={veto} className="grid gap-2 border-y border-border py-3" aria-label={`Veto ${o.title}`}>
+            <p className="text-[15px]">
+              Veto <strong className="font-semibold">{o.title}</strong>? It&apos;s out for everyone and can&apos;t be undone.
+              You&apos;ll have {vetoesLeft - 1} of {data.vetoAllowance} left.
+            </p>
+            <label className="flex min-h-11 cursor-pointer items-center gap-2.5 text-[15px]">
+              <input type="checkbox" name="showName" className="size-5 accent-truck-green-ink" />
+              Show my name (otherwise nobody knows it was you)
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              <Button type="button" variant="outline" className="h-11 border-input bg-card" onClick={() => setConfirmVeto(false)}>Cancel</Button>
+              <Button type="submit" variant="destructive" className="h-11" disabled={pending}>
+                <Ban aria-hidden className="size-[18px]" strokeWidth={1.8} />
+                {pending ? "Vetoing…" : "Veto it"}
+              </Button>
+            </div>
+          </form>
         )}
         {(likes.length > 0 || roses.length > 0) && (
           <div className="grid gap-1 text-[13px] text-muted-foreground">

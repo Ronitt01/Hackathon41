@@ -3,16 +3,21 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PaintedBoard } from "@/components/kafila/painted-board";
 import { createClient } from "@/lib/supabase/client";
+import { perHead } from "@/lib/dropout";
 import { inr } from "@/lib/money";
+import { BudgetTracker } from "./budget-tracker";
 import { loadMoney, type MoneyData } from "./data";
 import { ExpenseForm } from "./expense-form";
 import { ExpenseList } from "./expense-list";
+import { RemoveMember } from "./remove-member";
+import { Rooms } from "./rooms";
 import { SettleUp } from "./settle-up";
 import { UpiForm } from "./upi-form";
 
-const TABLES = ["expenses", "expense_shares", "settlements", "members"];
+// rooms isn't in the realtime publication; bed_assignments is, so a new split still shows up live.
+const TABLES = ["expenses", "expense_shares", "settlements", "members", "bed_assignments"];
 
-/** Money tab: balances, settle-up (M-5/M-6), add expense (C-4/M-3), expense list. Live across phones. */
+/** Money tab: my budget (M-7), balances, settle-up (M-5/M-6), add expense (C-4/M-3), expenses, rooms (M-4), dropouts (M-8). Live across phones. */
 export function MoneyTab({ tripId, meId, today, initial }: { tripId: string; meId: string | null; today: string; initial: MoneyData }) {
   const [data, setData] = useState(initial);
   const latest = useRef(0);
@@ -53,12 +58,20 @@ export function MoneyTab({ tripId, meId, today, initial }: { tripId: string; meI
   const shown = members.filter((m) => m.status !== "dropped" || (balances[m.id] ?? 0) !== 0);
   const mine = meId ? (balances[meId] ?? 0) : 0;
   const allSquare = Object.values(balances).every((b) => b === 0);
+  const mySpend = data.expenses.reduce((sum, e) => sum + (e.expense_shares.find((s) => s.member_id === meId)?.amount_paise ?? 0), 0);
+  // M-8 for everyone: same maths as the drop route (plan's shared cost, else the room rent), from group-readable data.
+  const dropped = members.filter((m) => m.status === "dropped");
+  const going = members.length - dropped.length;
+  const shared = data.groupCost || data.beds.reduce((s, b) => s + b.price_paise, 0);
+  const dropDelta = perHead(shared, going) - perHead(shared, members.length);
 
   return (
     <>
       <PaintedBoard note={allSquare ? "Nobody owes anything" : undefined}>
         {allSquare ? "All square" : mine > 0 ? `You get back ${inr(mine)}` : mine < 0 ? `You owe ${inr(-mine)}` : "You're square"}
       </PaintedBoard>
+
+      {me && <BudgetTracker tripId={tripId} spent={mySpend} budget={data.myBudget} />}
 
       <section aria-labelledby="balances-h" className="grid gap-2">
         <div>
@@ -102,6 +115,17 @@ export function MoneyTab({ tripId, meId, today, initial }: { tripId: string; meI
         <h2 id="expenses-h" className="text-[17px] leading-snug font-bold">Expenses</h2>
         <ExpenseList expenses={data.expenses} members={members} onChange={refresh} />
       </section>
+
+      <Rooms tripId={tripId} meId={meId} isOrganizer={me?.role === "organizer"} data={data} onChange={refresh} />
+
+      {dropped.length > 0 && (
+        <p role="status" className="tabular text-[15px]">
+          Since {dropped.map((m) => m.display_name).join(", ")} dropped out:{" "}
+          <span className="font-bold">{dropDelta > 0 ? `+${inr(dropDelta)} per person` : "no change per person"}</span>
+        </p>
+      )}
+
+      {me?.role === "organizer" && <RemoveMember tripId={tripId} meId={meId} members={members} onChange={refresh} />}
 
       {me && (
         <section aria-labelledby="upi-h" className="grid gap-2">

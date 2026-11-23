@@ -1,0 +1,382 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-23T16:14:18.863Z",
+  "title": "Design System: Kafila",
+  "extensions": {
+    "colorMeta": {
+      "wash": {
+        "role": "neutral",
+        "displayName": "Lime Wash",
+        "tonalRamp": [
+          "#3D3E3C",
+          "#6E6F6C",
+          "#9FA09D",
+          "#CFD1CD",
+          "#F6F8F4",
+          "#F9FAF7",
+          "#FCFCFB",
+          "#FEFEFE"
+        ]
+      },
+      "ink": {
+        "role": "primary",
+        "displayName": "Deep Ink",
+        "tonalRamp": [
+          "#070504",
+          "#0C0907",
+          "#110D0A",
+          "#16110E",
+          "#484340",
+          "#817E7C",
+          "#BAB9B7",
+          "#E8E8E7"
+        ]
+      },
+      "truck-yellow": {
+        "role": "secondary",
+        "displayName": "Chrome Yellow",
+        "tonalRamp": [
+          "#3D2E01",
+          "#6D5202",
+          "#9D7703",
+          "#CE9C04",
+          "#F5C537",
+          "#F8D776",
+          "#FBE9B4",
+          "#FEF8E6"
+        ]
+      },
+      "truck-red": {
+        "role": "secondary",
+        "displayName": "Truck Red",
+        "tonalRamp": [
+          "#32040C",
+          "#5A0715",
+          "#820A1E",
+          "#AA0E27",
+          "#D34058",
+          "#E17C8C",
+          "#EFB7C0",
+          "#FAE7EA"
+        ]
+      },
+      "truck-green": {
+        "role": "tertiary",
+        "displayName": "Parrot Green",
+        "tonalRamp": [
+          "#082311",
+          "#0E3F1F",
+          "#145B2D",
+          "#1A773B",
+          "#4BA36A",
+          "#83C099",
+          "#BCDDC7",
+          "#E9F4EC"
+        ]
+      },
+      "truck-green-ink": {
+        "role": "tertiary",
+        "displayName": "Text-Strength Green",
+        "tonalRamp": [
+          "#061C0F",
+          "#0A321A",
+          "#0F4926",
+          "#145F31",
+          "#458D61",
+          "#7FB093",
+          "#B9D4C4",
+          "#E8F1EB"
+        ]
+      },
+      "track": {
+        "role": "neutral",
+        "displayName": "Tape Track",
+        "tonalRamp": [
+          "#393A38",
+          "#676864",
+          "#949691",
+          "#C2C4BE",
+          "#E9ECE5",
+          "#F0F2ED",
+          "#F7F8F5",
+          "#FCFDFC"
+        ]
+      },
+      "card": {
+        "role": "neutral",
+        "displayName": "Card White",
+        "tonalRamp": [
+          "#404040",
+          "#737373",
+          "#A6A6A6",
+          "#D9D9D9",
+          "#EDEDED",
+          "#F5F5F5",
+          "#FAFAFA",
+          "#FFFFFF"
+        ]
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Muted Wash",
+        "tonalRamp": [
+          "#3A3B39",
+          "#696A67",
+          "#979994",
+          "#C6C9C2",
+          "#EDF0E9",
+          "#F3F5F0",
+          "#F8F9F7",
+          "#FDFDFC"
+        ]
+      },
+      "muted-ink": {
+        "role": "neutral",
+        "displayName": "Warm Grey Ink",
+        "tonalRamp": [
+          "#171513",
+          "#292522",
+          "#3C3631",
+          "#4E4741",
+          "#7D7570",
+          "#A5A09D",
+          "#CECBC9",
+          "#EFEEED"
+        ]
+      },
+      "border": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "tonalRamp": [
+          "#373836",
+          "#636460",
+          "#8F918B",
+          "#BBBEB6",
+          "#E3E5DE",
+          "#ECEDE8",
+          "#F5F5F3",
+          "#FCFCFB"
+        ]
+      },
+      "input-edge": {
+        "role": "neutral",
+        "displayName": "Field Edge",
+        "tonalRamp": [
+          "#242523",
+          "#40433E",
+          "#5D605A",
+          "#7A7E75",
+          "#A5A9A1",
+          "#C1C4BF",
+          "#DDDFDC",
+          "#F4F4F3"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Board Lettering",
+        "purpose": "Painted-board verdict only; uppercase Bungee with drop-shade."
+      },
+      "display-wordmark": {
+        "displayName": "Wordmark Board",
+        "purpose": "The Kafila board on home and join."
+      },
+      "headline": {
+        "displayName": "App Bar Title",
+        "purpose": "Trip name in the sticky app bar."
+      },
+      "title": {
+        "displayName": "Section Title",
+        "purpose": "Section headings, each with a 13px muted helper line under it."
+      },
+      "title-sm": {
+        "displayName": "Sub-section Title",
+        "purpose": "Headings inside a block or surface."
+      },
+      "figure": {
+        "displayName": "Money Figure",
+        "purpose": "The tabular number that answers a card."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "All working text."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Chips, meta lines, tab labels, meter values."
+      }
+    },
+    "shadows": [
+      {
+        "name": "board-drop-shade-yellow",
+        "value": "text-shadow: 2px 2px 0 rgb(200 16 46 / 0.55)",
+        "purpose": "Sign-painter drop-shade on yellow board lettering."
+      },
+      {
+        "name": "board-drop-shade-red",
+        "value": "text-shadow: 2px 2px 0 rgb(26 20 16 / 0.45)",
+        "purpose": "Drop-shade on red board lettering."
+      },
+      {
+        "name": "dock-scrim",
+        "value": "0 -8px 16px var(--wash)",
+        "purpose": "Wash fade above the docked primary action; a scrim, not elevation."
+      }
+    ],
+    "motion": [
+      {
+        "name": "board-stamp",
+        "value": "420ms cubic-bezier(0.16, 1, 0.3, 1); from scale(0.96) rotate(-0.6deg)",
+        "purpose": "The painted board lands like a stamp; skipped under reduced motion."
+      },
+      {
+        "name": "tape-fill",
+        "value": "700ms cubic-bezier(0.16, 1, 0.3, 1); clip-path inset reveal; delay index * 60ms",
+        "purpose": "Reflector tape fills along its track; skipped under reduced motion."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "column",
+        "value": "448px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Ink action button; the default for any primary action.",
+      "html": "<button class=\"ds-btn-primary\">Add stop</button>",
+      "css": ".ds-btn-primary{font-family:var(--font-hind),Hind,system-ui,sans-serif;height:44px;padding:0 16px;border:1px solid transparent;border-radius:12px;background:var(--ink,#1A1410);color:var(--wash,#F4F6F1);font-size:15px;font-weight:600;cursor:pointer;transition:background .15s,transform .1s}.ds-btn-primary:hover{background:rgb(26 20 16/.8)}.ds-btn-primary:focus-visible{outline:2px solid var(--truck-green,#1E8C45);outline-offset:2px}.ds-btn-primary:active{transform:translateY(1px)}"
+    },
+    {
+      "name": "Docked CTA",
+      "kind": "button",
+      "refersTo": "button-cta",
+      "description": "Full-width screen action docked above the tab bar.",
+      "html": "<button class=\"ds-btn-cta\">Make a new fair plan</button>",
+      "css": ".ds-btn-cta{font-family:var(--font-hind),Hind,system-ui,sans-serif;width:100%;height:50px;border:0;border-radius:16.8px;background:var(--ink,#1A1410);color:var(--wash,#F4F6F1);font-size:16px;font-weight:700;cursor:pointer}.ds-btn-cta:hover{background:rgb(26 20 16/.8)}.ds-btn-cta:focus-visible{outline:2px solid var(--truck-green,#1E8C45);outline-offset:2px}.ds-btn-cta:active{transform:translateY(1px)}"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Secondary action on wash with hairline border.",
+      "html": "<button class=\"ds-btn-outline\">Compare</button>",
+      "css": ".ds-btn-outline{font-family:var(--font-hind),Hind,system-ui,sans-serif;height:44px;padding:0 16px;border:1px solid var(--border,#DCDFD6);border-radius:12px;background:var(--wash,#F4F6F1);color:var(--ink,#1A1410);font-size:15px;font-weight:600;cursor:pointer}.ds-btn-outline:hover{background:var(--muted,#E9ECE4)}.ds-btn-outline:focus-visible{outline:2px solid var(--truck-green,#1E8C45);outline-offset:2px}"
+    },
+    {
+      "name": "Toggle",
+      "kind": "chip",
+      "refersTo": "toggle-selected",
+      "description": "44px pill toggle; text-strength green fill when pressed.",
+      "html": "<div style=\"display:flex;gap:8px\"><button class=\"ds-toggle\" aria-pressed=\"true\">Like · 3</button><button class=\"ds-toggle\" aria-pressed=\"false\">Rose</button></div>",
+      "css": ".ds-toggle{font-family:var(--font-hind),Hind,system-ui,sans-serif;height:44px;padding:0 14px;border-radius:9999px;border:1px solid var(--input,#8F948A);background:#fff;color:var(--ink,#1A1410);font-size:15px;font-weight:600;cursor:pointer}.ds-toggle:hover{background:var(--muted,#E9ECE4)}.ds-toggle[aria-pressed=true]{background:var(--truck-green-ink,#17703A);border-color:var(--truck-green-ink,#17703A);color:#fff}.ds-toggle:focus-visible{outline:2px solid var(--truck-green,#1E8C45);outline-offset:2px}"
+    },
+    {
+      "name": "Chip",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "Ink-outlined pill tag (Organizer, stop tags).",
+      "html": "<span class=\"ds-chip\">Organizer</span>",
+      "css": ".ds-chip{font-family:var(--font-hind),Hind,system-ui,sans-serif;display:inline-flex;align-items:center;padding:0 10px;border:1px solid var(--ink,#1A1410);border-radius:9999px;background:#fff;color:var(--ink,#1A1410);font-size:13px;line-height:24px;font-weight:600}"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "44px white field with a 3:1 edge and green focus.",
+      "html": "<input class=\"ds-input\" placeholder=\"Stop name\">",
+      "css": ".ds-input{font-family:var(--font-hind),Hind,system-ui,sans-serif;height:44px;width:100%;padding:0 10px;border:1px solid var(--input,#8F948A);border-radius:12px;background:#fff;color:var(--ink,#1A1410);font-size:16px;caret-color:var(--truck-green,#1E8C45)}.ds-input:focus-visible{outline:2px solid var(--truck-green,#1E8C45);outline-offset:2px}"
+    },
+    {
+      "name": "Surface",
+      "kind": "card",
+      "refersTo": "surface",
+      "description": "Flat white surface with hairline border; no shadow.",
+      "html": "<section class=\"ds-surface\"><h3>Why this works for you</h3><p>Stays near the beach you liked.</p><p class=\"ds-share\"><span>Your share</span><strong>₹6,200</strong></p></section>",
+      "css": ".ds-surface{font-family:var(--font-hind),Hind,system-ui,sans-serif;padding:12px 14px;border:1px solid var(--border,#DCDFD6);border-radius:16.8px;background:#fff;color:var(--ink,#1A1410);font-size:15px;line-height:1.45}.ds-surface h3{margin:0 0 8px;font-size:15px;font-weight:700}.ds-surface p{margin:0}.ds-surface .ds-share{display:flex;justify-content:space-between;align-items:baseline;margin-top:10px;padding-top:8px;border-top:1px solid var(--border,#DCDFD6)}.ds-share span{color:var(--muted-foreground,#5C534C)}.ds-share strong{font-size:22px;font-variant-numeric:tabular-nums}"
+    },
+    {
+      "name": "Painted Board",
+      "kind": "custom",
+      "refersTo": "painted-board",
+      "description": "The one truck rear-board per screen, carrying that screen's verdict.",
+      "html": "<section class=\"ds-board\"><div class=\"ds-board-face\"><p>Fits everyone’s budget</p></div></section>",
+      "css": ".ds-board{padding:10px;border-radius:9.6px;background:var(--truck-green,#1E8C45) url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='10'%3E%3Cpath d='M0 1 L8 9 L16 1' fill='none' stroke='%23C8102E' stroke-width='3.2'/%3E%3C/svg%3E\") repeat}.ds-board-face{padding:12px 16px;border:2px solid var(--ink,#1A1410);border-radius:3px;background:var(--truck-yellow,#F2B705);color:var(--ink,#1A1410);text-align:center}.ds-board-face p{margin:0;font-family:var(--font-bungee),Bungee,sans-serif;font-size:23px;line-height:1.1;text-transform:uppercase;text-wrap:balance;text-shadow:2px 2px 0 rgb(200 16 46/.55)}"
+    },
+    {
+      "name": "Reflector Tape",
+      "kind": "custom",
+      "refersTo": "reflector-track",
+      "description": "The only proportion encoding: red/white tape on one fixed-length track, number beside it.",
+      "html": "<div class=\"ds-tape-row\"><b>Group minimum</b><div class=\"ds-tape\" role=\"meter\" aria-label=\"Group minimum\" aria-valuemin=\"0\" aria-valuemax=\"100\" aria-valuenow=\"64\"><div style=\"width:64%\"></div></div><span>64%</span></div>",
+      "css": ".ds-tape-row{font-family:var(--font-hind),Hind,system-ui,sans-serif;display:grid;grid-template-columns:104px 1fr 40px;gap:8px;align-items:center;font-size:13px;color:var(--ink,#1A1410)}.ds-tape-row span{text-align:right;font-weight:600;font-variant-numeric:tabular-nums}.ds-tape{height:14px;overflow:hidden;border:1px solid var(--ink,#1A1410);border-radius:2px;background:var(--track,#E4E7DF)}.ds-tape>div{height:100%;background:repeating-linear-gradient(90deg,var(--truck-red,#C8102E) 0 10px,#fff 10px 20px)}"
+    },
+    {
+      "name": "Tab Bar",
+      "kind": "nav",
+      "refersTo": "tab-bar",
+      "description": "Four-tab bottom bar; the active tab wears its paint (Plan shown: green) on a 4px top indicator.",
+      "html": "<nav class=\"ds-tabs\"><a href=\"#\">Trip</a><a href=\"#\" aria-current=\"page\">Plan</a><a href=\"#\">Decide</a><a href=\"#\">Money</a></nav>",
+      "css": ".ds-tabs{font-family:var(--font-hind),Hind,system-ui,sans-serif;display:grid;grid-template-columns:repeat(4,1fr);height:64px;border-top:1px solid var(--border,#DCDFD6);background:#fff}.ds-tabs a{display:flex;align-items:center;justify-content:center;margin-top:-1px;border-top:4px solid transparent;font-size:13px;color:var(--muted-foreground,#5C534C);text-decoration:none}.ds-tabs a:hover{color:var(--ink,#1A1410)}.ds-tabs a:focus-visible{outline:2px solid var(--truck-green,#1E8C45);outline-offset:2px}.ds-tabs a[aria-current=page]{border-top-color:var(--paint,#1E8C45);font-weight:700;color:var(--ink,#1A1410)}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Goods Truck, Built by Many Hands",
+    "overview": "Kafila dresses a group trip as a hand-painted Indian goods truck (\"Horn OK Please\"). The paint is spent in exactly one place per screen: a painted rear-board that carries that screen's verdict (\"FITS EVERYONE'S BUDGET\", \"₹4,000 TO GO\", the group favourite). Everything around it is a clean, quiet working app on a lime-wash ground, so the board reads as a sign, not as decoration.\n\nThe world is light only, built for phones held outdoors in daylight. Density is a single narrow column (448px max) with 44px tap targets and a fixed bottom tab bar; desktop centres the same column rather than spreading out. Each tab owns one paint, worn as a 4px band under the app bar and as its tab indicator, so the user always knows which part of the truck they are standing on.\n\nShares of a whole (fairness, budget used, savings) are drawn one way only: reflector tape, red and white segments in an ink-outlined track, on a single fixed length scale with the number set beside it as plain text. It replaces the earlier stock shadcn look and refuses the category's white-card-and-teal travel template and its dark-neon opposite.",
+    "keyCharacteristics": [
+      "One painted board per screen; the rest is plain UI.",
+      "Lime-wash ground, deep ink text, three truck paints (chrome yellow, truck red, parrot green).",
+      "One paint per tab: Trip yellow, Plan green, Decide red, Money ink.",
+      "Parrot green is the only live/selected colour.",
+      "Reflector tape is the only way to draw a proportion.",
+      "Flat surfaces, hairline borders, no card shadows."
+    ],
+    "rules": [
+      {
+        "name": "The One Live Colour Rule",
+        "body": "Green is the only colour that means \"selected\", \"on\" or \"focused\". Selected states use text-strength green with white text; focus is a 2px parrot-green outline at 2px offset. Yellow, red and ink never signal state.",
+        "section": "colors"
+      },
+      {
+        "name": "The One Paint Per Tab Rule",
+        "body": "The trip shell sets `--paint` from the active tab (Trip yellow, Plan green, Decide red, Money ink); only the app bar's 4px bottom band and the active tab's 4px top indicator wear it. Jar and Wrapped live under Trip and wear yellow.",
+        "section": "colors"
+      },
+      {
+        "name": "The Paint-Only Lettering Rule",
+        "body": "Bungee appears only on a painted board, a Wrapped story card (which is a board) and the wordmark. Headings in the working UI are Hind bold.",
+        "section": "typography"
+      },
+      {
+        "name": "The Lettering Speaks First Rule",
+        "body": "A board has no label above it. If it needs context, a 13px semibold note sits under the lettering.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat Truck Rule",
+        "body": "Nothing lifts. If an element needs emphasis it gets paint (a board) or weight (bold, figure size), never a shadow.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** put exactly one painted board on a screen, carrying that screen's verdict or headline.",
+      "**Do** use text-strength green (#17703A) for any selected fill that carries white text; keep parrot green (#1E8C45) for focus, paint bands and the chevron ground.",
+      "**Do** draw every proportion as reflector tape on the shared fixed-length track, with the number as text beside it.",
+      "**Do** keep tap targets at 44px and form fields at 16px text.",
+      "**Do** gate the stamp and tape-fill motion behind `prefers-reduced-motion: no-preference`."
+    ],
+    "donts": [
+      "**Don't** add a second painted board, or set Bungee on working UI headings, buttons or labels.",
+      "**Don't** put a label or kicker above a board; context goes in the note under it.",
+      "**Don't** use yellow, red or ink to show a selected or active state; that is green's job alone.",
+      "**Don't** lift surfaces with box shadows; the board's lettering drop-shade is the only offset shade in the world.",
+      "**Don't** introduce teal, gradients or a dark theme; the world is light only.",
+      "**Don't** encode a proportion with a ring, pie or colour scale."
+    ]
+  }
+}

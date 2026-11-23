@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Columns2, Flower2, Plus, X } from "lucide-react";
+import { Ban, Columns2, Flower2, MessageSquareText, Plus, Timer, X } from "lucide-react";
 import { PaintedBoard } from "@/components/kafila/painted-board";
 import { Button } from "@/components/ui/button";
 import { errorMessage } from "@/lib/supabase/auth";
@@ -10,6 +10,8 @@ import { cn } from "@/lib/utils";
 import { AddOptionForm } from "./add-option-form";
 import { CompareStays } from "./compare-stays";
 import { loadDecide, reactionsOn, type DecideData } from "./data";
+import { Decisions, NewDecisionForm } from "./decisions";
+import { ImportChat } from "./import-chat";
 import { CHIP, OptionCard, toggleClass } from "./option-card";
 
 const FILTERS = [
@@ -20,7 +22,7 @@ const FILTERS = [
   { label: "Destinations", kinds: ["destination"] },
   { label: "Other", kinds: ["transport", "other"] },
 ];
-const LIVE_TABLES = ["options", "option_aspects", "reactions", "comments", "stops"];
+const LIVE_TABLES = ["options", "option_aspects", "reactions", "comments", "stops", "decisions"];
 
 /** D-1 / D-2 / C-3: options with likes, Roses, comments and group fit, kept live with Realtime. */
 export function DecideBoard({
@@ -38,7 +40,7 @@ export function DecideBoard({
   const [data, setData] = useState(initial);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState(0);
-  const [panel, setPanel] = useState<"add" | "compare" | null>(null);
+  const [panel, setPanel] = useState<"add" | "compare" | "decision" | "import" | null>(null);
   const latest = useRef(0);
 
   const refresh = useCallback(async () => {
@@ -71,6 +73,9 @@ export function DecideBoard({
   const names = Object.fromEntries(data.members.map((m) => [m.id, m.display_name]));
   const activeCount = Math.max(1, data.members.filter((m) => m.status !== "dropped").length);
   const myRose = data.reactions.find((r) => r.kind === "rose" && r.member_id === meId);
+  const isOrganizer = data.members.find((m) => m.id === meId)?.role === "organizer";
+  const vetoesLeft = Math.max(0, data.vetoAllowance - data.myVetoes.length);
+  const togglePanel = (p: NonNullable<typeof panel>) => setPanel(panel === p ? null : p);
   // Group favourite: likes + 3×Roses on the whole option; ties keep the first (newest) option.
   let fav: { id: string; title: string; likes: number; roses: number; score: number } | null = null;
   for (const o of data.options) {
@@ -104,6 +109,20 @@ export function DecideBoard({
           Compare stays
         </Button>
       </div>
+      {isOrganizer && (
+        <div className="grid grid-cols-2 gap-2">
+          <Button variant="outline" className={cn(toggleClass(panel === "decision"), "rounded-lg")} aria-pressed={panel === "decision"} onClick={() => togglePanel("decision")}>
+            <Timer aria-hidden className="size-[18px]" strokeWidth={1.8} />
+            New decision
+          </Button>
+          <Button variant="outline" className={cn(toggleClass(panel === "import"), "rounded-lg")} aria-pressed={panel === "import"} onClick={() => togglePanel("import")}>
+            <MessageSquareText aria-hidden className="size-[18px]" strokeWidth={1.8} />
+            Import chat
+          </Button>
+        </div>
+      )}
+      {panel === "decision" && <NewDecisionForm tripId={tripId} onAdded={() => { setPanel(null); refresh(); }} />}
+      {panel === "import" && <ImportChat tripId={tripId} meId={meId} onAdded={() => { setPanel(null); refresh(); }} />}
       {panel === "add" && <AddOptionForm tripId={tripId} meId={meId} onAdded={() => { setPanel(null); refresh(); }} />}
       {panel === "compare" && <CompareStays tripId={tripId} data={data} activeCount={activeCount} refresh={refresh} />}
 
@@ -117,6 +136,15 @@ export function DecideBoard({
         </span>
       </p>
       )}
+
+      <p className="flex items-start gap-2 text-[15px] text-muted-foreground">
+        <Ban aria-hidden className={cn("mt-0.5 size-[18px] shrink-0", vetoesLeft ? "text-ink" : "text-muted-foreground")} strokeWidth={1.8} />
+        <span>
+          <strong className="font-semibold text-ink">Vetoes left: {vetoesLeft} of {data.vetoAllowance}.</strong> Nobody sees who used one unless you choose to show your name.
+        </span>
+      </p>
+
+      <Decisions tripId={tripId} data={data} isOrganizer={isOrganizer} refresh={refresh} />
 
       <div className="-mx-1 flex flex-wrap" role="group" aria-label="Filter by kind">
         {FILTERS.map((f, i) => (
@@ -142,7 +170,7 @@ export function DecideBoard({
         </p>
       )}
       {shown.map((o) => (
-        <OptionCard key={o.id} option={o} data={data} names={names} meId={meId} tripId={tripId} myRose={myRose} activeCount={activeCount} refresh={refresh} />
+        <OptionCard key={o.id} option={o} data={data} names={names} meId={meId} tripId={tripId} myRose={myRose} activeCount={activeCount} refresh={refresh} vetoesLeft={vetoesLeft} />
       ))}
     </section>
   );

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <pattern id="chev" width="32" height="20" patternUnits="userSpaceOnUse">
+      <rect width="32" height="20" fill="#1E8C45"/>
+      <path d="M0 2 L16 18 L32 2" fill="none" stroke="#C8102E" stroke-width="6"/>
+    </pattern>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#chev)"/>
+  <rect x="44" y="44" width="424" height="424" rx="72" fill="#F2B705" stroke="#1A1410" stroke-width="8"/>
+  <g transform="translate(-33 0)">
+    <path transform="translate(8 8)" fill="#C8102E" fill-opacity="0.55" d="M168 136H232V236L322 136H404L294 252L410 376H326L232 272V376H168Z"/>
+    <path fill="#1A1410" d="M168 136H232V236L322 136H404L294 252L410 376H326L232 272V376H168Z"/>
+  </g>
+</svg>

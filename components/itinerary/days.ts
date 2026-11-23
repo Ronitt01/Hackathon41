@@ -32,4 +32,4 @@ export function positionUpdates(ordered: Pick<Ordered, "id" | "position">[]): { 
 }
 
 // Lives here (not in the "use client" component) so the server page can import it as a plain string.
-export const STOP_COLUMNS = "id, day, position, starts_at, title, kind, location_name, cost_paise, tags, locked";
+export const STOP_COLUMNS = "id, day, position, starts_at, title, kind, location_name, cost_paise, tags, locked, branch";

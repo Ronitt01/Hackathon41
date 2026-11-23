@@ -1,15 +1,16 @@
 import { NextResponse } from "next/server";
 import { generateCandidates } from "@/lib/ai";
 import { pickFairPlan, type FairMember } from "@/lib/fairness";
-import { tripDays, type PlanStop, type ReactionCounts } from "@/lib/plan-candidates";
+import { applyTaste, tripDays, type PlanStop, type ReactionCounts } from "@/lib/plan-candidates";
 import { createAdminClient, MISSING_SECRET_KEY } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { tasteWeights } from "@/lib/taste";
 
-type MemberRow = { id: string; home_city: string | null };
+type MemberRow = { id: string; user_id: string; role: string; home_city: string | null };
 type PrivateRow = { member_id: string; budget_paise: number | null; prefs: Record<string, number> | null };
 type OptionRow = { id: string; kind: string; title: string; price_paise: number | null; tags: string[] };
 type ReactionRow = { member_id: string; option_id: string; kind: string };
-type StopRow = { day: number; position: number; starts_at: string | null; title: string; kind: PlanStop["kind"]; location_name: string | null; cost_paise: number; tags: string[]; option_id: string | null };
+type StopRow = { day: number; position: number; starts_at: string | null; title: string; kind: PlanStop["kind"]; location_name: string | null; cost_paise: number; tags: string[]; option_id: string | null; branch: PlanStop["branch"] };
 
 const fail = (status: number, error: string) => NextResponse.json({ error }, { status });
 
@@ -29,15 +30,15 @@ export async function POST(_request: Request, ctx: RouteContext<"/api/trips/[id]
     return fail(503, MISSING_SECRET_KEY);
   }
 
-  const { data: trip, error: tripError } = await admin.from("trips").select("destination, start_date, end_date, active_plan_id").eq("id", tripId).single();
+  const { data: trip, error: tripError } = await admin.from("trips").select("destination, start_date, end_date, active_plan_id, previous_trip_id").eq("id", tripId).single();
   if (tripError || !trip) return fail(500, "Couldn't load the trip. Please try again.");
   const [members, privates, options, reactions, locked] = await Promise.all([
-    admin.from("members").select("id, home_city").eq("trip_id", tripId).neq("status", "dropped"),
+    admin.from("members").select("id, user_id, role, home_city").eq("trip_id", tripId).neq("status", "dropped"),
     admin.from("member_private").select("member_id, budget_paise, prefs").eq("trip_id", tripId),
     admin.from("options").select("id, kind, title, price_paise, tags").eq("trip_id", tripId).is("vetoed_at", null),
     admin.from("reactions").select("member_id, option_id, kind").eq("trip_id", tripId),
     trip.active_plan_id
-      ? admin.from("stops").select("day, position, starts_at, title, kind, location_name, cost_paise, tags, option_id").eq("plan_id", trip.active_plan_id).eq("locked", true)
+      ? admin.from("stops").select("day, position, starts_at, title, kind, location_name, cost_paise, tags, option_id, branch").eq("plan_id", trip.active_plan_id).eq("locked", true)
       : Promise.resolve({ data: [], error: null }),
   ]);
   const loadError = members.error ?? privates.error ?? options.error ?? reactions.error ?? locked.error;
@@ -66,6 +67,10 @@ export async function POST(_request: Request, ctx: RouteContext<"/api/trips/[id]
   }
   const groupPrefs: Record<string, number> = {};
   for (const m of fairMembers) for (const [tag, v] of Object.entries(m.prefs)) groupPrefs[tag] = (groupPrefs[tag] ?? 0) + (Number(v) || 0);
+  // W-2: the group's taste from the previous trip nudges candidates towards tags it rated 4+.
+  const organizerUserIds = (members.data as MemberRow[]).filter((m) => m.role === "organizer").map((m) => m.user_id);
+  const taste = await previousTripTaste(admin, trip.previous_trip_id, organizerUserIds);
+  for (const [tag, w] of Object.entries(taste)) groupPrefs[tag] = (groupPrefs[tag] ?? 0) + w;
   const lockedStops: PlanStop[] = (locked.data as StopRow[]).map((s) => ({
     day: s.day,
     position: s.position,
@@ -76,13 +81,14 @@ export async function POST(_request: Request, ctx: RouteContext<"/api/trips/[id]
     tags: s.tags,
     optionId: s.option_id,
     locationName: s.location_name,
+    branch: s.branch,
   }));
 
   const candidates = await generateCandidates({
     destination: trip.destination,
     days: tripDays(trip.start_date, trip.end_date),
     options: planOptions,
-    reactions: reactionCounts,
+    reactions: applyTaste(reactionCounts, planOptions, taste), // shortcut: Claude sees the nudge as fractional likes
     locked: lockedStops,
     memberCount: fairMembers.length,
     groupPrefs,
@@ -126,6 +132,7 @@ export async function POST(_request: Request, ctx: RouteContext<"/api/trips/[id]
           tags: s.tags,
           option_id: s.optionId,
           locked: !!s.locked,
+          branch: s.branch ?? null,
         })),
       ),
     () =>
@@ -158,4 +165,22 @@ export async function POST(_request: Request, ctx: RouteContext<"/api/trips/[id]
   if (trip.active_plan_id) await admin.from("plans").update({ status: "discarded" }).eq("id", trip.active_plan_id);
 
   return NextResponse.json({ status: "ok", planId: plan.id });
+}
+
+/**
+ * Tag weights from the previous trip's stop ratings (aggregates only, no names). Used only when a current organizer
+ * was on that trip (the same rule as the picker, which lists only the organizer's own trips), so nobody can pull
+ * taste data from a stranger's trip by its id.
+ */
+async function previousTripTaste(admin: ReturnType<typeof createAdminClient>, previousTripId: string | null, organizerUserIds: string[]): Promise<Record<string, number>> {
+  if (!previousTripId || !organizerUserIds.length) return {};
+  const { data: shared } = await admin.from("members").select("id").eq("trip_id", previousTripId).in("user_id", organizerUserIds).limit(1);
+  if (!shared?.length) return {};
+  const { data, error } = await admin.from("stop_ratings").select("rating, stops(tags)").eq("trip_id", previousTripId);
+  if (error) {
+    console.error("plan: taste load failed", error); // a missing nudge is fine; the plan still works
+    return {};
+  }
+  const rows = data as unknown as { rating: number; stops: { tags: string[] } | null }[];
+  return tasteWeights(rows.map((r) => ({ rating: r.rating, tags: r.stops?.tags ?? [] })));
 }
