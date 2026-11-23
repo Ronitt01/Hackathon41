@@ -72,13 +72,13 @@ export function DecideBoard({
   const activeCount = Math.max(1, data.members.filter((m) => m.status !== "dropped").length);
   const myRose = data.reactions.find((r) => r.kind === "rose" && r.member_id === meId);
   // Group favourite: likes + 3×Roses on the whole option; ties keep the first (newest) option.
-  let fav: { title: string; likes: number; roses: number; score: number } | null = null;
+  let fav: { id: string; title: string; likes: number; roses: number; score: number } | null = null;
   for (const o of data.options) {
     if (o.vetoed_at) continue;
     const likes = reactionsOn(data.reactions, o.id, null, "like").length;
     const roses = reactionsOn(data.reactions, o.id, null, "rose").length;
     const score = likes + 3 * roses;
-    if (score > (fav?.score ?? 0)) fav = { title: o.title, likes, roses, score };
+    if (score > (fav?.score ?? 0)) fav = { id: o.id, title: o.title, likes, roses, score };
   }
   const favNote = fav && [
     "Most loved so far",
@@ -107,6 +107,7 @@ export function DecideBoard({
       {panel === "add" && <AddOptionForm tripId={tripId} meId={meId} onAdded={() => { setPanel(null); refresh(); }} />}
       {panel === "compare" && <CompareStays tripId={tripId} data={data} activeCount={activeCount} refresh={refresh} />}
 
+      {(!myRose || myRose.option_id !== fav?.id) && ( // the board already names your Rose when it is the favourite
       <p className="flex items-start gap-2 text-[15px] text-muted-foreground">
         <Flower2 aria-hidden className={cn("mt-0.5 size-[18px] shrink-0", myRose ? "text-truck-green-ink" : "text-ink")} strokeWidth={1.8} />
         <span>
@@ -115,6 +116,7 @@ export function DecideBoard({
             : "You have one Rose for this trip. Give it to the option you love most."}
         </span>
       </p>
+      )}
 
       <div className="-mx-1 flex flex-wrap" role="group" aria-label="Filter by kind">
         {FILTERS.map((f, i) => (

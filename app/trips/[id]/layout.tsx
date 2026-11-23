@@ -38,7 +38,7 @@ export default async function TripLayout({ children, params }: { children: React
             <h1 className="truncate text-[18px] leading-tight font-bold">{trip.name}</h1>
             <p className="text-[13px] text-muted-foreground">{when ? `${when} · ${who}` : who}</p>
           </div>
-          <span aria-hidden className="shrink-0 pr-2 font-display text-[13px] uppercase text-ink">Kafila</span>
+          <span aria-hidden className="shrink-0 pr-2 text-[12px] font-bold tracking-[0.12em] uppercase text-muted-foreground">Kafila</span>
         </div>
       </header>
       <main className="mx-auto grid w-full max-w-md content-start gap-4 px-4 pt-4 pb-28">{children}</main>

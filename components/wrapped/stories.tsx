@@ -107,9 +107,19 @@ export function WrappedStories({ cards, summary }: { cards: WrappedCard[]; summa
                 >
                   {card.big}
                 </p>
-                <p className="text-[17px] font-semibold">{card.label}</p>
-                {card.sharePct !== undefined && <ReflectorBar value={card.sharePct} label={`${card.label}: ${card.big}`} />}
-                {card.sub && <p className="text-lg font-medium text-pretty">{card.sub}</p>}
+                {card.sharePct === undefined ? (
+                  <>
+                    <p className="text-[17px] font-semibold">{card.label}</p>
+                    {card.sub && <p className="text-lg font-medium text-pretty">{card.sub}</p>}
+                  </>
+                ) : (
+                  // share cards read as one sentence: "100%" ▸ tape ▸ "went on food (₹2,400)", label closes it
+                  <>
+                    <ReflectorBar value={card.sharePct} label={`${card.label}: ${card.big}`} />
+                    {card.sub && <p className="text-lg font-medium text-pretty">{card.sub}</p>}
+                    <p className="text-[15px] font-semibold opacity-90">{card.label}</p>
+                  </>
+                )}
               </div>
               <p className="text-[15px] font-bold">Kafila</p>
             </div>
@@ -229,12 +239,21 @@ async function drawCard(card: WrappedCard, colour: { bg: string; fg: string }): 
   while (size > 70 && widest(size) > width) size -= 10;
 
   // Lettering leads; the context line, tape and sub sit under it. Line caps keep it clear of the footer.
-  const blocks = [
-    text(`400 ${size}px ${display}`, big, size + 10, 3),
-    text(`600 56px ${body}`, card.label, 70, 2),
-    ...(card.sharePct === undefined ? [] : [tape(card.sharePct)]),
-    text(`500 60px ${body}`, card.sub, 78, 4),
-  ].filter((b) => b.h > 0);
+  // Same reading order as the on-screen card: share cards go number ▸ tape ▸ sub ▸ label.
+  const blocks = (
+    card.sharePct === undefined
+      ? [
+          text(`400 ${size}px ${display}`, big, size + 10, 3),
+          text(`600 56px ${body}`, card.label, 70, 2),
+          text(`500 60px ${body}`, card.sub, 78, 4),
+        ]
+      : [
+          text(`400 ${size}px ${display}`, big, size + 10, 3),
+          tape(card.sharePct),
+          text(`500 60px ${body}`, card.sub, 78, 4),
+          text(`600 50px ${body}`, card.label, 64, 2),
+        ]
+  ).filter((b) => b.h > 0);
   const gap = 40;
   const top = band + keyline + 96;
   const footer = H - band - keyline - 150;
