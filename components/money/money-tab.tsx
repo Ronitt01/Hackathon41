@@ -56,7 +56,7 @@ export function MoneyTab({ tripId, meId, today, initial }: { tripId: string; meI
 
   return (
     <>
-      <PaintedBoard label={allSquare ? "Nobody owes anything" : undefined}>
+      <PaintedBoard note={allSquare ? "Nobody owes anything" : undefined}>
         {allSquare ? "All square" : mine > 0 ? `You get back ${inr(mine)}` : mine < 0 ? `You owe ${inr(-mine)}` : "You're square"}
       </PaintedBoard>
 

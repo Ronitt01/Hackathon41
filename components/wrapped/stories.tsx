@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Download, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ReflectorBar } from "@/components/kafila/reflector-bar";
 import type { WrappedCard } from "@/lib/wrapped";
 
 // Truck-paint fields: Tailwind class for the screen, matching hex for the canvas export. Every pair keeps text ≥ 4.5:1.
@@ -13,6 +14,12 @@ const PALETTE = [
   { className: "bg-truck-green-ink text-white", bg: "#17703A", fg: "#FFFFFF" },
   { className: "bg-ink text-truck-yellow", bg: "#1A1410", fg: "#F2B705" },
 ];
+
+// Canvas-only copies of the globals.css tokens (the export can't read Tailwind classes).
+const GREEN = "#1E8C45";
+const RED = "#C8102E";
+const INK = "#1A1410";
+const TRACK = "#E4E7DF";
 
 const icon = { "aria-hidden": true, strokeWidth: 1.8, className: "size-5" } as const;
 
@@ -88,20 +95,24 @@ export function WrappedStories({ cards, summary }: { cards: WrappedCard[]; summa
             key={card.id}
             aria-roledescription="slide"
             aria-label={`${i + 1} of ${cards.length}`}
-            className={`flex aspect-[9/16] w-full shrink-0 snap-center flex-col justify-between rounded-xl p-7 ${PALETTE[i % PALETTE.length].className}`}
+            className="chevron-band flex aspect-[9/16] w-full shrink-0 snap-center rounded-md p-2.5"
           >
-            <div className="grid gap-3">
-              <p className="text-[17px] font-semibold">{card.eyebrow}</p>
-              <p
-                className={`font-display leading-[1.05] uppercase break-words ${
-                  card.big.length > 12 ? "text-3xl" : card.big.length > 7 ? "text-4xl" : "text-6xl"
-                }`}
-              >
-                {card.big}
-              </p>
-              {card.sub && <p className="text-lg font-medium text-pretty">{card.sub}</p>}
+            {/* Rear-board: chevron band frame, ink keyline, lettering first and its context line under it. */}
+            <div className={`flex flex-1 flex-col rounded-[3px] border-2 border-ink p-7 ${PALETTE[i % PALETTE.length].className}`}>
+              <div className="my-auto grid gap-3">
+                <p
+                  className={`font-display leading-[1.05] uppercase break-words ${
+                    card.big.length > 12 ? "text-3xl" : card.big.length > 7 ? "text-4xl" : "text-6xl"
+                  }`}
+                >
+                  {card.big}
+                </p>
+                <p className="text-[17px] font-semibold">{card.label}</p>
+                {card.sharePct !== undefined && <ReflectorBar value={card.sharePct} label={`${card.label}: ${card.big}`} />}
+                {card.sub && <p className="text-lg font-medium text-pretty">{card.sub}</p>}
+              </div>
+              <p className="text-[15px] font-bold">Kafila</p>
             </div>
-            <p className="text-[15px] font-bold">Kafila</p>
           </article>
         ))}
       </div>
@@ -150,44 +161,94 @@ async function drawCard(card: WrappedCard, colour: { bg: string; fg: string }): 
   const display = root.getPropertyValue("--font-bungee").trim() || body;
   // The canvas draws with whatever is loaded right now, so wait for both faces first.
   await Promise.all([document.fonts?.load(`400 100px ${display}`), document.fonts?.load(`600 48px ${body}`)]).catch(() => {});
-  const left = 96;
-  const width = canvas.width - left * 2;
+  const { width: W, height: H } = canvas;
+  // The DOM card scaled ~2.8×: 10px chevron band, 2px ink keyline, 28px padding.
+  const band = 28;
+  const keyline = 6;
+  const left = band + keyline + 80;
+  const width = W - left * 2;
 
+  // Chevron band: rows of red V strokes on parrot green (matches .chevron-band's 16×10 tile).
+  ctx.fillStyle = GREEN;
+  ctx.fillRect(0, 0, W, H);
+  ctx.strokeStyle = RED;
+  ctx.lineWidth = 9;
+  ctx.beginPath();
+  for (let y = 0; y < H; y += 28) {
+    for (let x = 0; x < W; x += 44) {
+      ctx.moveTo(x, y + 3);
+      ctx.lineTo(x + 22, y + 25);
+      ctx.lineTo(x + 44, y + 3);
+    }
+  }
+  ctx.stroke();
+  ctx.fillStyle = INK;
+  ctx.fillRect(band, band, W - band * 2, H - band * 2);
   ctx.fillStyle = colour.bg;
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = colour.fg;
+  ctx.fillRect(band + keyline, band + keyline, W - (band + keyline) * 2, H - (band + keyline) * 2);
   ctx.textBaseline = "top";
 
-  ctx.font = `600 56px ${body}`;
-  ctx.fillText(card.eyebrow, left, 360, width);
+  // Each block measures itself first so the whole stack can be centred in the panel.
+  const text = (font: string, value: string, lineHeight: number, maxLines: number) => {
+    ctx.font = font;
+    const lines = wrap(ctx, value, width);
+    if (lines.length > maxLines) lines.splice(maxLines - 1, Infinity, `${lines[maxLines - 1]}…`);
+    return {
+      h: lines.length * lineHeight,
+      draw: (y: number) => {
+        ctx.font = font;
+        ctx.fillStyle = colour.fg;
+        // maxWidth squeezes a single word that is still wider than the card
+        lines.forEach((line, i) => ctx.fillText(line, left, y + i * lineHeight, width));
+      },
+    };
+  };
+  // Reflector tape: red/white segments filling an ink-outlined track to the share.
+  const tape = (pct: number) => ({
+    h: 44,
+    draw: (y: number) => {
+      ctx.fillStyle = INK;
+      ctx.fillRect(left, y, width, 44);
+      ctx.fillStyle = TRACK;
+      ctx.fillRect(left + 4, y + 4, width - 8, 36);
+      const fill = ((width - 8) * Math.max(0, Math.min(100, pct))) / 100;
+      for (let x = 0; x < fill; x += 28) {
+        ctx.fillStyle = x % 56 ? "#FFFFFF" : RED;
+        ctx.fillRect(left + 4 + x, y + 4, Math.min(28, fill - x), 36);
+      }
+    },
+  });
 
-  // Shrink the big number until its longest word fits, then wrap. Bungee is wide, so it starts smaller.
+  // Shrink the big lettering until its longest word fits, then wrap. Bungee is wide, so it starts smaller.
   const big = card.big.toUpperCase();
   let size = big.length > 12 ? 120 : 200;
-  do {
-    ctx.font = `400 ${size}px ${display}`;
-    size -= 10;
-  } while (size > 60 && Math.max(...big.split(" ").map((w) => ctx.measureText(w).width)) > width);
-  // Line caps keep the sub text above the "Kafila" footer at y=1740.
-  const y = drawLines(ctx, big, left, 460, width, size + 20, 3);
-  ctx.font = `500 60px ${body}`;
-  drawLines(ctx, card.sub, left, y + 60, width, 78, 5);
+  const widest = (s: number) => {
+    ctx.font = `400 ${s}px ${display}`;
+    return Math.max(...big.split(" ").map((w) => ctx.measureText(w).width));
+  };
+  while (size > 70 && widest(size) > width) size -= 10;
 
-  ctx.font = `700 48px ${body}`;
-  ctx.fillText("Kafila", left, canvas.height - 180);
-  return canvas;
-}
-
-/** Draws wrapped text, at most maxLines (the last gets "…"); returns the y below it. */
-function drawLines(ctx: CanvasRenderingContext2D, text: string, left: number, y: number, width: number, lineHeight: number, maxLines: number): number {
-  const lines = wrap(ctx, text, width);
-  if (lines.length > maxLines) lines.splice(maxLines - 1, Infinity, `${lines[maxLines - 1]}…`);
-  // maxWidth squeezes a single word that is still wider than the card
-  for (const line of lines) {
-    ctx.fillText(line, left, y, width);
-    y += lineHeight;
+  // Lettering leads; the context line, tape and sub sit under it. Line caps keep it clear of the footer.
+  const blocks = [
+    text(`400 ${size}px ${display}`, big, size + 10, 3),
+    text(`600 56px ${body}`, card.label, 70, 2),
+    ...(card.sharePct === undefined ? [] : [tape(card.sharePct)]),
+    text(`500 60px ${body}`, card.sub, 78, 4),
+  ].filter((b) => b.h > 0);
+  const gap = 40;
+  const top = band + keyline + 96;
+  const footer = H - band - keyline - 150;
+  const total = blocks.reduce((h, b) => h + b.h, 0) + gap * (blocks.length - 1);
+  let y = Math.max(top, top + (footer - 40 - top - total) / 2);
+  for (const b of blocks) {
+    b.draw(y);
+    y += b.h + gap;
   }
-  return y;
+
+  ctx.fillStyle = colour.fg;
+  ctx.font = `700 48px ${body}`;
+  ctx.fillText("Kafila", left, footer);
+  return canvas;
 }
 
 function wrap(ctx: CanvasRenderingContext2D, text: string, width: number): string[] {

@@ -1,8 +1,7 @@
-import { Lock } from "lucide-react";
+import { ChevronRight, Lock } from "lucide-react";
 import Link from "next/link";
 import { DecideBoard } from "@/components/decide/board";
 import { loadDecide } from "@/components/decide/data";
-import { buttonVariants } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
 
@@ -18,26 +17,23 @@ export default async function DecidePage({ params }: { params: Promise<{ id: str
   ]);
 
   return (
-    <>
-      <section className="grid gap-3 rounded-xl border border-border bg-card p-4" aria-labelledby="my-prefs-title">
-        <div className="flex items-start gap-3">
-          <span className="grid size-10 shrink-0 place-items-center rounded-full border border-border bg-wash">
-            <Lock aria-hidden className="size-5" strokeWidth={1.8} />
+    <DecideBoard tripId={id} meId={me.id} initial={data}>
+      <Link
+        href={`/trips/${id}/decide/me`}
+        className={cn(
+          "flex min-h-11 items-center gap-3 rounded-xl border bg-card px-3 py-2.5 hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-truck-green",
+          mine ? "border-border" : "border-2 border-ink",
+        )}
+      >
+        <Lock aria-hidden className="size-5 shrink-0" strokeWidth={1.8} />
+        <span className="grid min-w-0 flex-1">
+          <span className="font-semibold">{mine ? "Your budget & preferences" : "Add your budget & preferences"}</span>
+          <span className="text-[13px] text-muted-foreground">
+            {mine ? "Saved. Only you can see it." : "So the group sees which plans fit everyone. Only you see it."}
           </span>
-          <div className="grid gap-0.5">
-            <h2 id="my-prefs-title" className="text-[17px] font-bold">Your budget &amp; preferences</h2>
-            <p className="text-[15px] text-muted-foreground">
-              {mine
-                ? "Saved. Only you can see it. Update it any time."
-                : "Add your max budget and what you love, so the group can see which plans fit everyone. Takes a minute."}
-            </p>
-          </div>
-        </div>
-        <Link href={`/trips/${id}/decide/me`} className={buttonVariants({ variant: mine ? "outline" : "default", className: cn("w-full", mine && "border-input bg-card") })}>
-          {mine ? "Edit my budget & preferences" : "Add my budget & preferences"}
-        </Link>
-      </section>
-      <DecideBoard tripId={id} meId={me.id} initial={data} />
-    </>
+        </span>
+        <ChevronRight aria-hidden className="size-5 shrink-0 text-muted-foreground" strokeWidth={1.8} />
+      </Link>
+    </DecideBoard>
   );
 }

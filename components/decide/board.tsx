@@ -2,13 +2,14 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Columns2, Flower2, Plus, X } from "lucide-react";
+import { PaintedBoard } from "@/components/kafila/painted-board";
 import { Button } from "@/components/ui/button";
 import { errorMessage } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { AddOptionForm } from "./add-option-form";
 import { CompareStays } from "./compare-stays";
-import { loadDecide, type DecideData } from "./data";
+import { loadDecide, reactionsOn, type DecideData } from "./data";
 import { CHIP, OptionCard, toggleClass } from "./option-card";
 
 const FILTERS = [
@@ -22,7 +23,18 @@ const FILTERS = [
 const LIVE_TABLES = ["options", "option_aspects", "reactions", "comments", "stops"];
 
 /** D-1 / D-2 / C-3: options with likes, Roses, comments and group fit, kept live with Realtime. */
-export function DecideBoard({ tripId, meId, initial }: { tripId: string; meId: string; initial: DecideData }) {
+export function DecideBoard({
+  tripId,
+  meId,
+  initial,
+  children,
+}: {
+  tripId: string;
+  meId: string;
+  initial: DecideData;
+  /** Rendered under the favourite board (the page's budget & preferences row). */
+  children?: React.ReactNode;
+}) {
   const [data, setData] = useState(initial);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState(0);
@@ -59,6 +71,20 @@ export function DecideBoard({ tripId, meId, initial }: { tripId: string; meId: s
   const names = Object.fromEntries(data.members.map((m) => [m.id, m.display_name]));
   const activeCount = Math.max(1, data.members.filter((m) => m.status !== "dropped").length);
   const myRose = data.reactions.find((r) => r.kind === "rose" && r.member_id === meId);
+  // Group favourite: likes + 3×Roses on the whole option; ties keep the first (newest) option.
+  let fav: { title: string; likes: number; roses: number; score: number } | null = null;
+  for (const o of data.options) {
+    if (o.vetoed_at) continue;
+    const likes = reactionsOn(data.reactions, o.id, null, "like").length;
+    const roses = reactionsOn(data.reactions, o.id, null, "rose").length;
+    const score = likes + 3 * roses;
+    if (score > (fav?.score ?? 0)) fav = { title: o.title, likes, roses, score };
+  }
+  const favNote = fav && [
+    "Most loved so far",
+    fav.likes > 0 && `${fav.likes} ${fav.likes === 1 ? "like" : "likes"}`,
+    fav.roses > 0 && `${fav.roses} ${fav.roses === 1 ? "Rose" : "Roses"}`,
+  ].filter(Boolean).join(" · ");
   const kinds = FILTERS[filter].kinds;
   const shown = data.options
     .filter((o) => !kinds || kinds.includes(o.kind))
@@ -66,6 +92,8 @@ export function DecideBoard({ tripId, meId, initial }: { tripId: string; meId: s
 
   return (
     <section className="grid gap-4" aria-label="Options">
+      {fav && <PaintedBoard note={favNote || undefined}>{fav.title}</PaintedBoard>}
+      {children}
       <div className="grid grid-cols-2 gap-2">
         <Button variant={panel === "add" ? "outline" : "default"} className={panel === "add" ? "border-input bg-card" : undefined} onClick={() => setPanel(panel === "add" ? null : "add")}>
           {panel === "add" ? <X aria-hidden className="size-[18px]" strokeWidth={1.8} /> : <Plus aria-hidden className="size-[18px]" strokeWidth={1.8} />}

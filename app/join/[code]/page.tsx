@@ -11,7 +11,7 @@ export default async function JoinPage({ params }: { params: Promise<{ code: str
 
   return (
     <main className="mx-auto grid w-full max-w-md content-start gap-6 px-4 pt-8 pb-12">
-      <PaintedBoard className="[&_p:last-child]:py-1 [&_p:last-child]:text-[36px]">Kafila</PaintedBoard>
+      <PaintedBoard className="[&_p:first-child]:py-1 [&_p:first-child]:text-[36px]">Kafila</PaintedBoard>
       <section aria-labelledby="invited" className="grid gap-4 rounded-xl border bg-card p-4">
         <div className="grid gap-1">
           <h1 id="invited" className="text-[22px] leading-tight font-bold">You&apos;re invited</h1>

@@ -68,7 +68,7 @@ export function MyJar({ tripId, meId, jar, deposits, weeks, streak, children }: 
 
   return (
     <>
-      <PaintedBoard label="My Jar">{left === 0 ? "Goal reached" : `${inr(left)} to go`}</PaintedBoard>
+      <PaintedBoard>{left === 0 ? "Goal reached" : `${inr(left)} to go`}</PaintedBoard>
 
       <section aria-label="My savings" className="grid gap-2">
         <div className="flex items-baseline justify-between gap-3">

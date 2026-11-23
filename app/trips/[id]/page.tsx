@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ChevronRight, Film, PiggyBank } from "lucide-react";
 import { InviteButton } from "@/components/invite-button";
+import { PaintedBoard } from "@/components/kafila/painted-board";
 import { MemberList, type Member } from "@/components/member-list";
 import { createClient } from "@/lib/supabase/server";
 
@@ -13,6 +14,8 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
   ]);
   if (!trip) return null; // layout already 404s for non-members
 
+  const active = (members ?? []).filter((m) => m.status !== "dropped");
+  const confirmed = active.filter((m) => m.status === "confirmed").length;
   const links = [
     { href: `/trips/${trip.id}/jar`, Icon: PiggyBank, title: "Trip Jar", desc: "Save a little every week" },
     { href: `/trips/${trip.id}/wrapped`, Icon: Film, title: "Trip Wrapped", desc: "Your trip, in story cards" },
@@ -20,6 +23,10 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
 
   return (
     <>
+      <PaintedBoard note={confirmed < 2 ? "Share the link to bring the gang" : undefined}>
+        {active.length <= 1 ? "Just you so far" : `${confirmed} of ${active.length} in`}
+      </PaintedBoard>
+
       <section aria-labelledby="whos-in" className="grid gap-3">
         <div className="grid gap-0.5">
           <h2 id="whos-in" className="text-[17px] font-bold">Who&apos;s in</h2>

@@ -10,7 +10,8 @@ export type WrappedInput = {
   reactions: { option_id: string; kind: "like" | "rose" }[]; // whole-option reactions
 };
 
-export type WrappedCard = { id: string; eyebrow: string; big: string; sub: string };
+/** `label` is the context line drawn UNDER `big`; `sharePct` (0–100) is drawn as reflector tape on cards that are a share. */
+export type WrappedCard = { id: string; label: string; big: string; sub: string; sharePct?: number };
 
 const CATEGORY_LABEL: Record<string, string> = {
   food: "food", stay: "stays", travel: "travel", activity: "activities", shopping: "shopping", other: "other stuff",
@@ -33,7 +34,7 @@ export function wrappedCards({ trip, members, expenses, stops, options, reaction
     const people = Math.max(members.length, 1);
     cards.push({
       id: "total",
-      eyebrow: "Spent together",
+      label: "Spent together",
       big: rupees(total),
       sub: people > 1 ? `That's about ${rupees(total / people)} each for ${people} of you` : "Every rupee, tracked",
     });
@@ -42,17 +43,19 @@ export function wrappedCards({ trip, members, expenses, stops, options, reaction
   const food = expenses.filter((e) => e.category === "food");
   if (food.length) {
     const top = food.reduce((a, b) => (b.amount_paise > a.amount_paise ? b : a));
-    cards.push({ id: "meal", eyebrow: "Priciest meal", big: rupees(top.amount_paise), sub: top.title });
+    cards.push({ id: "meal", label: "Priciest meal", big: rupees(top.amount_paise), sub: top.title });
   }
 
   if (total > 0) {
     const byCategory = new Map<string, number>();
     for (const e of expenses) byCategory.set(e.category, (byCategory.get(e.category) ?? 0) + e.amount_paise);
     const [category, amount] = [...byCategory].reduce((a, b) => (b[1] > a[1] ? b : a));
+    const sharePct = Math.round((amount * 100) / total);
     cards.push({
       id: "category",
-      eyebrow: "Where the money went",
-      big: `${Math.round((amount * 100) / total)}%`,
+      label: "Where the money went",
+      big: `${sharePct}%`,
+      sharePct,
       sub: `went on ${CATEGORY_LABEL[category] ?? category} (${rupees(amount)})`,
     });
   }
@@ -70,13 +73,13 @@ export function wrappedCards({ trip, members, expenses, stops, options, reaction
   if (loved) {
     const { likes, roses } = love.get(loved.id)!;
     const counts = [likes && plural(likes, "like"), roses && plural(roses, "rose")].filter(Boolean).join(" · ");
-    cards.push({ id: "loved", eyebrow: "Most loved place", big: loved.title, sub: counts });
+    cards.push({ id: "loved", label: "Most loved place", big: loved.title, sub: counts });
   }
 
   if (stops.length) {
     const fromDates = trip.start_date && trip.end_date ? daySpan(trip.start_date, trip.end_date) : 0;
     const days = Math.max(fromDates, ...stops.map((s) => s.day));
-    cards.push({ id: "plan", eyebrow: "Planned together", big: plural(stops.length, "stop"), sub: `across ${plural(days, "day")}` });
+    cards.push({ id: "plan", label: "Planned together", big: plural(stops.length, "stop"), sub: `across ${plural(days, "day")}` });
   }
 
   const made = new Map<string, number>();
@@ -86,7 +89,7 @@ export function wrappedCards({ trip, members, expenses, stops, options, reaction
     return n > (best?.n ?? 0) ? { name: m.display_name, n } : best;
   }, null);
   if (mvp) {
-    cards.push({ id: "mvp", eyebrow: "MVP planner", big: mvp.name, sub: `did the most planning, with ${plural(mvp.n, "addition")} to ideas and expenses` });
+    cards.push({ id: "mvp", label: "MVP planner", big: mvp.name, sub: `did the most planning, with ${plural(mvp.n, "addition")} to ideas and expenses` });
   }
 
   return cards;
@@ -94,5 +97,5 @@ export function wrappedCards({ trip, members, expenses, stops, options, reaction
 
 /** Plain-text recap for sharing in the group chat. */
 export function wrappedSummary(tripName: string, cards: WrappedCard[]): string {
-  return [`${tripName} — Trip Wrapped`, ...cards.map((c) => `${c.eyebrow}: ${c.big}${c.sub ? ` (${c.sub})` : ""}`), "Made with Kafila"].join("\n");
+  return [`${tripName} — Trip Wrapped`, ...cards.map((c) => `${c.label}: ${c.big}${c.sub ? ` (${c.sub})` : ""}`), "Made with Kafila"].join("\n");
 }

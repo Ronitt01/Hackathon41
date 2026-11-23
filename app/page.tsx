@@ -18,7 +18,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ n
   return (
     <main className="mx-auto grid w-full max-w-md content-start gap-6 px-4 pt-8 pb-12">
       <header className="grid gap-3">
-        <PaintedBoard className="[&_p:last-child]:py-1 [&_p:last-child]:text-[36px]">Kafila</PaintedBoard>
+        <PaintedBoard className="[&_p:first-child]:py-1 [&_p:first-child]:text-[36px]">Kafila</PaintedBoard>
         <div className="grid gap-1">
           <h1 className="text-[22px] leading-tight font-bold text-balance">Plan the trip, not the drama.</h1>
           <p className="text-muted-foreground">Budgets stay private. The plan is fair to everyone.</p>

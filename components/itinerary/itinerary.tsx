@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowDown, ArrowUp, BedDouble, Bus, Compass, MapPin, Pencil, Pin, Plus, Trash2, Users, Utensils, type LucideIcon } from "lucide-react";
+import { ArrowDown, ArrowUp, BedDouble, Bus, Compass, MapPin, MoreHorizontal, Pencil, Pin, Plus, Trash2, Users, Utensils, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { inr } from "@/lib/money";
 import { createClient } from "@/lib/supabase/client";
@@ -33,6 +33,9 @@ export function Itinerary({
   const [minDays, setMinDays] = useState(1);
   const [editing, setEditing] = useState<string | null>(null); // stop id, or "add-<day>"
   const [error, setError] = useState<string | null>(null);
+  const [open, setOpen] = useState<string | null>(null); // the one stop whose controls are showing
+  // Delete confirm for the open stop: null = not asked, true = asking, false = just cancelled (refocus the trash button).
+  const [confirming, setConfirming] = useState<boolean | null>(null);
 
   useEffect(() => {
     const supabase = createClient();
@@ -54,6 +57,7 @@ export function Itinerary({
   const days = Math.max(dayCount(startDate, endDate, stops.map((s) => s.day)), minDays);
   const stopsOn = (day: number) => stops.filter((s) => s.day === day).sort(byPosition);
   const total = stops.reduce((sum, s) => sum + s.cost_paise, 0);
+  const perPerson = activeMembers > 0 ? Math.round(total / activeMembers) : total;
 
   // Each action re-reads the stops itself so this phone updates even if Realtime is slow.
   async function run(action: (supabase: ReturnType<typeof createClient>) => Promise<{ error: unknown }[]>) {
@@ -77,7 +81,7 @@ export function Itinerary({
   }
 
   function remove(stop: Stop) {
-    if (!confirm(`Remove "${stop.title}" from the plan?`)) return;
+    setOpen(null);
     act(async (supabase) => {
       const res = await supabase.from("stops").delete().eq("id", stop.id);
       if (res.error) return [res];
@@ -89,7 +93,7 @@ export function Itinerary({
     <div className="grid gap-5">
       <p className="text-[13px] text-muted-foreground">
         Plan total <strong className="tabular font-semibold text-ink">{inr(total)}</strong>
-        {activeMembers > 0 && <> · about <strong className="tabular font-semibold text-ink">{inr(Math.round(total / activeMembers))}</strong> per person</>}
+        {activeMembers > 1 && perPerson !== total && <> · about <strong className="tabular font-semibold text-ink">{inr(perPerson)}</strong> per person</>}
       </p>
       {error && <p role="alert" className="text-[13px] text-destructive">{error}</p>}
 
@@ -116,13 +120,22 @@ export function Itinerary({
                     />
                   </li>
                 ) : (
-                  <li key={s.id} className="grid grid-cols-[48px_1fr_auto] items-start gap-x-2.5 border-t pt-2">
+                  <li key={s.id} className="grid grid-cols-[48px_1fr_auto_auto] items-start gap-x-2.5 border-t py-2">
                     <span className="tabular font-semibold">{s.starts_at?.slice(0, 5)}</span>
                     <div className="min-w-0">
                       <p className="leading-snug font-semibold break-words">{s.title}</p>
                       {(s.location_name || s.cost_paise > 0 || s.locked) && (
-                        <p className="text-[13px] text-muted-foreground">
-                          {[s.location_name, s.cost_paise > 0 && `${inr(s.cost_paise)} for the group`, s.locked && "Kept"].filter(Boolean).join(" · ")}
+                        <p className="flex gap-1 text-[13px] text-muted-foreground">
+                          {s.locked && (
+                            <span className="flex shrink-0 items-center gap-0.5 font-semibold text-truck-green-ink">
+                              <Pin aria-hidden strokeWidth={1.8} className="size-3.5" />
+                              Kept
+                            </span>
+                          )}
+                          <span className="truncate">
+                            {s.locked && (s.location_name || s.cost_paise > 0) && "· "}
+                            {[s.location_name, s.cost_paise > 0 && `${inr(s.cost_paise)} for the group`].filter(Boolean).join(" · ")}
+                          </span>
                         </p>
                       )}
                     </div>
@@ -130,21 +143,52 @@ export function Itinerary({
                       <Kind aria-hidden strokeWidth={1.8} className="size-4" />
                       {KINDS[s.kind as keyof typeof KINDS] ?? s.kind}
                     </span>
-                    <div className="col-span-2 col-start-2 -ml-3 flex items-center">
-                      <IconButton label={`Move ${s.title} up`} disabled={i === 0} onClick={() => move(day, i, -1)} icon={ArrowUp} />
-                      <IconButton label={`Move ${s.title} down`} disabled={i === dayStops.length - 1} onClick={() => move(day, i, 1)} icon={ArrowDown} />
-                      <IconButton label={`Edit ${s.title}`} onClick={() => setEditing(s.id)} icon={Pencil} />
-                      <IconButton label={`Delete ${s.title}`} onClick={() => remove(s)} icon={Trash2} className="text-destructive hover:text-destructive" />
-                      <Button
-                        variant="ghost"
-                        aria-pressed={s.locked}
-                        onClick={() => act((supabase) => Promise.all([supabase.from("stops").update({ locked: !s.locked }).eq("id", s.id)]))}
-                        className={`ml-auto px-3 text-[13px] ${s.locked ? "bg-truck-green-ink text-white hover:bg-truck-green-ink/90 hover:text-white" : "text-muted-foreground"}`}
-                      >
-                        <Pin aria-hidden strokeWidth={1.8} className="size-4" />
-                        Keep<span className="sr-only"> {s.title} when AI re-plans</span>
-                      </Button>
-                    </div>
+                    {/* 44px target; negative margin keeps the row as compact as the sketch. */}
+                    <IconButton
+                      label={`Edit ${s.title}`}
+                      aria-expanded={open === s.id}
+                      aria-controls={`controls-${s.id}`}
+                      onClick={() => {
+                        setOpen(open === s.id ? null : s.id);
+                        setConfirming(null);
+                      }}
+                      icon={MoreHorizontal}
+                      className="-my-2 -mr-2"
+                    />
+                    {open === s.id && (
+                      <div id={`controls-${s.id}`} className="col-span-3 col-start-2 -ml-3 flex flex-wrap items-center pt-1">
+                        <IconButton label={`Move ${s.title} up`} disabled={i === 0} onClick={() => move(day, i, -1)} icon={ArrowUp} />
+                        <IconButton label={`Move ${s.title} down`} disabled={i === dayStops.length - 1} onClick={() => move(day, i, 1)} icon={ArrowDown} />
+                        <IconButton label={`Change details of ${s.title}`} onClick={() => setEditing(s.id)} icon={Pencil} />
+                        {confirming ? (
+                          <>
+                            <Button className="bg-destructive px-3 text-[13px] text-white hover:bg-destructive/90" onClick={() => remove(s)}>
+                              Delete<span className="sr-only"> {s.title}</span>
+                            </Button>
+                            <Button variant="ghost" autoFocus className="px-3 text-[13px]" onClick={() => setConfirming(false)}>
+                              Cancel
+                            </Button>
+                          </>
+                        ) : (
+                          <IconButton
+                            label={`Delete ${s.title}`}
+                            autoFocus={confirming === false}
+                            onClick={() => setConfirming(true)}
+                            icon={Trash2}
+                            className="text-ink"
+                          />
+                        )}
+                        <Button
+                          variant="ghost"
+                          aria-pressed={s.locked}
+                          onClick={() => act((supabase) => Promise.all([supabase.from("stops").update({ locked: !s.locked }).eq("id", s.id)]))}
+                          className={`ml-auto px-3 text-[13px] ${s.locked ? "bg-truck-green-ink text-white hover:bg-truck-green-ink/90 hover:text-white" : "text-muted-foreground"}`}
+                        >
+                          <Pin aria-hidden strokeWidth={1.8} className="size-4" />
+                          Keep<span className="sr-only"> {s.title}</span> when AI re-plans
+                        </Button>
+                      </div>
+                    )}
                   </li>
                 );
               })}
@@ -186,7 +230,16 @@ function IconButton({
   icon: Icon,
   className = "",
   ...props
-}: { label: string; icon: LucideIcon; className?: string; disabled?: boolean; onClick: () => void }) {
+}: {
+  label: string;
+  icon: LucideIcon;
+  className?: string;
+  disabled?: boolean;
+  autoFocus?: boolean;
+  "aria-expanded"?: boolean;
+  "aria-controls"?: string;
+  onClick: () => void;
+}) {
   return (
     <Button variant="ghost" aria-label={label} className={`size-11 px-0 text-muted-foreground ${className}`} {...props}>
       <Icon aria-hidden strokeWidth={1.8} className="size-[18px]" />

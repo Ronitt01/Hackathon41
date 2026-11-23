@@ -22,7 +22,7 @@ export async function FairPlanCard({ tripId, planId }: { tripId: string; planId:
   return (
     <>
       {scores.length > 0 ? ( // scores exist only once a fair plan was computed; a trip's starter plan has none
-        <PaintedBoard label="Fair plan">Fits everyone&apos;s budget</PaintedBoard>
+        <PaintedBoard>Fits everyone&apos;s budget</PaintedBoard>
       ) : (
         <section className="grid gap-1" aria-labelledby="fair-plan">
           <h2 id="fair-plan" className="text-[17px] leading-snug font-bold">Fair plan</h2>

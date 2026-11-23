@@ -37,6 +37,8 @@ test("all six cards from a full trip", () => {
   assert.match(cards.total.sub, /about ₹3,333 each for 3/); // rounded to whole rupees
   assert.deepEqual([cards.meal.big, cards.meal.sub], ["₹6,000", "Thalassa dinner"]);
   assert.equal(cards.category.big, "70%");
+  assert.equal(cards.category.sharePct, 70); // drawn as reflector tape
+  assert.equal(cards.total.sharePct, undefined); // only shares get tape
   assert.match(cards.category.sub, /food/);
   assert.deepEqual([cards.loved.big, cards.loved.sub], ["Fort Aguada", "1 like · 1 rose"]); // 1+3 beats 3
   assert.deepEqual([cards.plan.big, cards.plan.sub], ["3 stops", "across 5 days"]); // stop on day 5 > 4-day dates
@@ -54,6 +56,7 @@ test("no food expenses means no priciest meal", () => {
   const cards = byId({ ...base, expenses: [{ title: "Bus", amount_paise: 5000, category: "travel", created_by: "c" }], options: [] });
   assert.equal(cards.meal, undefined);
   assert.equal(cards.category.big, "100%");
+  assert.equal(cards.category.sharePct, 100);
   assert.equal(cards.mvp.big, "Chitra");
 });
 
