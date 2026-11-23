@@ -1,3 +1,4 @@
+import { FairPlanCard } from "@/components/fair-plan/fair-plan-card";
 import { STOP_COLUMNS } from "@/components/itinerary/days";
 import { Itinerary, type Stop } from "@/components/itinerary/itinerary";
 import { TripDetails } from "@/components/itinerary/trip-details";
@@ -22,6 +23,7 @@ export default async function PlanPage({ params }: { params: Promise<{ id: strin
 
   return (
     <>
+      <FairPlanCard tripId={trip.id} planId={trip.active_plan_id} />
       <Card>
         <CardHeader>
           <CardTitle>Trip details</CardTitle>
@@ -43,6 +45,7 @@ export default async function PlanPage({ params }: { params: Promise<{ id: strin
             <p role="alert" className="text-sm text-destructive">Couldn&apos;t load the plan: {error.message}</p>
           ) : (
             <Itinerary
+              key={trip.active_plan_id} // new fair plan → fresh stops state
               tripId={trip.id}
               planId={trip.active_plan_id}
               startDate={trip.start_date}
