@@ -58,6 +58,7 @@ export function MoneyTab({ tripId, meId, today, initial }: { tripId: string; meI
   const shown = members.filter((m) => m.status !== "dropped" || (balances[m.id] ?? 0) !== 0);
   const mine = meId ? (balances[meId] ?? 0) : 0;
   const allSquare = Object.values(balances).every((b) => b === 0);
+  const settledUp = allSquare && data.expenses.length > 0;
   const mySpend = data.expenses.reduce((sum, e) => sum + (e.expense_shares.find((s) => s.member_id === meId)?.amount_paise ?? 0), 0);
   // M-8 for everyone: same maths as the drop route (plan's shared cost, else the room rent), from group-readable data.
   const dropped = members.filter((m) => m.status === "dropped");
@@ -67,8 +68,13 @@ export function MoneyTab({ tripId, meId, today, initial }: { tripId: string; meI
 
   return (
     <>
-      <PaintedBoard note={allSquare ? "Nobody owes anything" : undefined}>
-        {allSquare ? "All square" : mine > 0 ? `You get back ${inr(mine)}` : mine < 0 ? `You owe ${inr(-mine)}` : "You're square"}
+      {/* Celebrate a real squaring-up only (not an empty trip). The key changes with each new expense or
+          payment, so the burst fires once per genuine "all square", not on every revisit. */}
+      <PaintedBoard
+        note={allSquare ? "Nobody owes anything" : undefined}
+        celebrate={settledUp ? `all-square-${tripId}-${data.expenses.length}-${data.settlements.length}` : undefined}
+      >
+        {settledUp ? "All square — paisa vasool" : allSquare ? "All square" :mine > 0 ? `You get back ${inr(mine)}` : mine < 0 ? `You owe ${inr(-mine)}` : "You're square"}
       </PaintedBoard>
 
       {me && <BudgetTracker tripId={tripId} spent={mySpend} budget={data.myBudget} />}

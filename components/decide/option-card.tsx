@@ -1,12 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Ban, CircleAlert, CircleCheck, Flower2, Heart, MessageCircle, Wallet } from "lucide-react";
+import { burst } from "@/components/kafila/confetti";
 import { ReflectorBar } from "@/components/kafila/reflector-bar";
+import { useToast } from "@/components/kafila/toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { inr, splitEqually } from "@/lib/money";
+import { tap } from "@/lib/haptics";
 import { errorMessage } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/client";
 import { tagLabel } from "@/lib/tags";
@@ -44,6 +47,10 @@ export function OptionCard({ option: o, data, names, meId, tripId, myRose, activ
   const [confirmVeto, setConfirmVeto] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  // Which icon plays its one .pop pulse: an aspect id, "option" (whole-option like) or "rose".
+  const [popKey, setPopKey] = useState<string | null>(null);
+  const card = useRef<HTMLElement>(null);
+  const toast = useToast();
   const vetoed = !!o.vetoed_at;
   const decided = data.decisions.some((d) => d.locked_option_id === o.id); // a lock is final: no veto
   const aspects = data.aspects.filter((a) => a.option_id === o.id);
@@ -62,17 +69,27 @@ export function OptionCard({ option: o, data, names, meId, tripId, myRose, activ
     return !error;
   }
 
-  function toggleLike(aspectId: string | null) {
+  // Once the veto lands and the card re-renders as vetoed, drop the sink animation's held end state.
+  useEffect(() => {
+    if (vetoed) card.current?.getAnimations().forEach((a) => a.cancel());
+  }, [vetoed]);
+
+  async function toggleLike(aspectId: string | null) {
     const mine = reactionsOn(data.reactions, o.id, aspectId, "like").find((r) => r.member_id === meId);
-    return act((s) =>
+    tap();
+    const ok = await act((s) =>
       mine
         ? s.from("reactions").delete().eq("id", mine.id)
         : s.from("reactions").insert({ trip_id: tripId, option_id: o.id, aspect_id: aspectId, member_id: meId, kind: "like" }),
     );
+    if (ok && !mine) setPopKey(aspectId ?? "option");
   }
 
-  function toggleRose() {
-    return act(async (s) => {
+  async function toggleRose(e: React.MouseEvent<HTMLButtonElement>) {
+    tap();
+    const r = e.currentTarget.getBoundingClientRect();
+    const giving = !roseHere;
+    const ok = await act(async (s) => {
       // One Rose per member per trip (unique index): take it back first, then give it here.
       if (myRose) {
         const { error } = await s.from("reactions").delete().eq("id", myRose.id);
@@ -80,22 +97,43 @@ export function OptionCard({ option: o, data, names, meId, tripId, myRose, activ
       }
       return s.from("reactions").insert({ trip_id: tripId, option_id: o.id, member_id: meId, kind: "rose" });
     });
+    if (!ok || !giving) return;
+    setPopKey("rose");
+    burst({ origin: { x: r.left + r.width / 2, y: r.top + r.height / 2 }, count: 18 });
+    toast("Rose given. Bold choice.", { tone: "success" });
+  }
+
+  /** The card greys out and sinks before the list re-sorts it to the bottom. Skipped under reduced motion. */
+  async function sink() {
+    const el = card.current;
+    if (!el || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    await el
+      .animate([{}, { filter: "grayscale(1)", opacity: 0.5, transform: "translateY(12px)" }], {
+        duration: 320,
+        easing: "cubic-bezier(0.16, 1, 0.3, 1)",
+        fill: "forwards",
+      })
+      .finished.catch(() => {});
   }
 
   async function veto(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const showName = new FormData(e.currentTarget).get("showName") === "on";
-    await act(async () => {
+    const ok = await act(async () => {
       const res = await fetch(`/api/trips/${tripId}/options/${o.id}/veto`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ showName }),
       });
-      if (res.ok) return { error: null };
+      if (res.ok) {
+        await sink();
+        return { error: null };
+      }
       const body = (await res.json().catch(() => null)) as { error?: string } | null;
       return { error: { message: body?.error } };
     });
     setConfirmVeto(false);
+    if (ok) toast(showName ? "Vetoed. Your name is on it." : "Vetoed. Nobody will know it was you.");
   }
 
   async function onComment(e: React.FormEvent<HTMLFormElement>) {
@@ -114,9 +152,10 @@ export function OptionCard({ option: o, data, names, meId, tripId, myRose, activ
   const score = data.scores?.[o.id];
   const fits = data.fit && o.price_paise != null ? data.fit[o.id] : undefined;
   const roseHere = myRose?.option_id === o.id;
+  const pop = (key: string) => popKey === key && "pop";
 
   return (
-    <article className={cn(SURFACE, "overflow-hidden", vetoed && "bg-muted")}>
+    <article ref={card} className={cn(SURFACE, "overflow-hidden", vetoed && "bg-muted")}>
       {o.image_url && (
         // eslint-disable-next-line @next/next/no-img-element -- any user-pasted URL; next/image needs allow-listed hosts
         <img src={o.image_url} alt="" className={cn("h-40 w-full object-cover", vetoed && "grayscale")} />
@@ -193,7 +232,7 @@ export function OptionCard({ option: o, data, names, meId, tripId, myRose, activ
                     disabled={pending || vetoed}
                     onClick={() => toggleLike(a.id)}
                   >
-                    <Heart aria-hidden className={cn("size-[18px]", on && "fill-current")} strokeWidth={1.8} />
+                    <Heart aria-hidden className={cn("size-[18px]", on && "fill-current", pop(a.id))} onAnimationEnd={() => setPopKey(null)} strokeWidth={1.8} />
                     {al.length > 0 && <span className="tabular">{al.length}</span>}
                   </Button>
                 </li>
@@ -205,12 +244,12 @@ export function OptionCard({ option: o, data, names, meId, tripId, myRose, activ
         {!vetoed && (
           <div className="grid grid-cols-2 gap-2">
             <Button variant="outline" className={toggleClass(liked(likes))} aria-pressed={liked(likes)} disabled={pending} onClick={() => toggleLike(null)}>
-              <Heart aria-hidden className={cn("size-[18px]", liked(likes) && "fill-current")} strokeWidth={1.8} />
+              <Heart aria-hidden className={cn("size-[18px]", liked(likes) && "fill-current", pop("option"))} onAnimationEnd={() => setPopKey(null)} strokeWidth={1.8} />
               {liked(likes) ? "Liked" : "Like"}
               {likes.length > 0 && <span className="tabular">· {likes.length}</span>}
             </Button>
             <Button variant="outline" className={toggleClass(roseHere)} aria-pressed={roseHere} disabled={pending} onClick={toggleRose}>
-              <Flower2 aria-hidden className="size-[18px]" strokeWidth={1.8} />
+              <Flower2 aria-hidden className={cn("size-[18px]", pop("rose"))} onAnimationEnd={() => setPopKey(null)} strokeWidth={1.8} />
               {roseHere ? "Your Rose" : myRose ? "Move Rose here" : "Give Rose"}
             </Button>
           </div>
@@ -252,7 +291,7 @@ export function OptionCard({ option: o, data, names, meId, tripId, myRose, activ
         )}
 
         <details className="border-t border-border text-[15px]">
-          <summary className="flex h-11 cursor-pointer list-none items-center gap-2 font-semibold [&::-webkit-details-marker]:hidden">
+          <summary className="press flex h-11 cursor-pointer list-none items-center gap-2 font-semibold [&::-webkit-details-marker]:hidden">
             <MessageCircle aria-hidden className="size-[18px]" strokeWidth={1.8} />
             {comments.length === 0 ? "Comment" : `${comments.length} comment${comments.length === 1 ? "" : "s"}`}
           </summary>

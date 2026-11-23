@@ -136,3 +136,21 @@
   .board-stamp { animation: board-stamp 420ms cubic-bezier(0.16, 1, 0.3, 1) both; }
   .tape-fill { animation: tape-fill 700ms cubic-bezier(0.16, 1, 0.3, 1) both; animation-delay: calc(var(--i, 0) * 60ms); }
 }
+
+/* Delight kit. Everything is visible at rest; these only add motion when motion is allowed. */
+/* .press: tactile squeeze for non-Button clickables (rows, chips). `scale` composes with other transforms. */
+.press { transition: scale 120ms cubic-bezier(0.16, 1, 0.3, 1); }
+/* .pop: add when a toggle turns on (heart, rose, claim) to play one pulse. .wiggle: a small "no" for errors. */
+@keyframes pop { 0%, 100% { transform: scale(1); } 40% { transform: scale(1.18); } }
+@keyframes wiggle { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-4px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+@keyframes toast-in { from { opacity: 0; transform: translateY(12px); } }
+@keyframes toast-out { to { opacity: 0; transform: translateY(6px); } }
+@media (prefers-reduced-motion: reduce) { .toast-out { opacity: 0; } }
+@media (prefers-reduced-motion: no-preference) {
+  .press:active { scale: 0.97; }
+  .pop { animation: pop 320ms cubic-bezier(0.16, 1, 0.3, 1); }
+  .wiggle { animation: wiggle 300ms cubic-bezier(0.16, 1, 0.3, 1); }
+  .toast-in { animation: toast-in 320ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+  .toast-in.wiggle { animation: toast-in 320ms cubic-bezier(0.16, 1, 0.3, 1) both, wiggle 300ms 320ms cubic-bezier(0.16, 1, 0.3, 1); }
+  .toast-out { animation: toast-out 200ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+}

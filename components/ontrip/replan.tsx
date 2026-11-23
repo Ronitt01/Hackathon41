@@ -4,7 +4,9 @@ import Link from "next/link";
 import { useState } from "react";
 import { CircleCheck, Clock, CloudRain, Sparkles, Zap } from "lucide-react";
 import { ReflectorBar } from "@/components/kafila/reflector-bar";
+import { useToast } from "@/components/kafila/toast";
 import { Button } from "@/components/ui/button";
+import { success, tap } from "@/lib/haptics";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { ReplanStop, Trigger } from "@/lib/replan";
@@ -42,6 +44,7 @@ export function Replan({ tripId }: { tripId: string }) {
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<React.ReactNode>(null);
   const [result, setResult] = useState<Proposal | null>(null);
+  const toast = useToast();
 
   async function call(method: "POST" | "PUT", body: unknown) {
     setPending(true);
@@ -74,8 +77,11 @@ export function Replan({ tripId }: { tripId: string }) {
     const data = await call("PUT", { replaceIds: result.replaceIds, stops: result.proposal });
     if (!data) return;
     setResult(null);
+    success();
+    toast("New plan, same squad", { tone: "success" });
     setInfo(
-      <span className="flex items-center gap-1.5 font-semibold text-truck-green-ink">
+      // Lands with the board's stamp (gated by reduced motion in globals.css).
+      <span className="board-stamp flex items-center gap-1.5 font-semibold text-truck-green-ink">
         <CircleCheck aria-hidden strokeWidth={1.8} className="size-5 shrink-0" />
         Plan updated. Everyone sees it on the Plan tab.
       </span>,
@@ -121,8 +127,11 @@ export function Replan({ tripId }: { tripId: string }) {
               key={id}
               type="button"
               aria-pressed={on}
-              onClick={() => setTrigger(id)}
-              className={`inline-flex h-11 items-center gap-1.5 rounded-full border px-3.5 text-[15px] font-semibold ${
+              onClick={() => {
+                tap();
+                setTrigger(id);
+              }}
+              className={`press inline-flex h-11 items-center gap-1.5 rounded-full border px-3.5 text-[15px] font-semibold ${
                 on ? "border-truck-green-ink bg-truck-green-ink text-white" : "border-input bg-card hover:bg-muted"
               }`}
             >

@@ -2,10 +2,12 @@
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Clock, Lock } from "lucide-react";
+import { ConfettiOnMount } from "@/components/kafila/confetti";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { countdown, leaders, rankOptions } from "@/lib/decisions";
+import { success } from "@/lib/haptics";
 import { errorMessage } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
@@ -86,7 +88,13 @@ export function Decisions({ tripId, data, isOrganizer, refresh }: { tripId: stri
               isOrganizer={isOrganizer}
               pending={pending === d.id}
               error={errors[d.id] ?? null}
-              onLock={() => act(d.id, () => postLock(tripId, d.id))}
+              onLock={() =>
+                act(d.id, async () => {
+                  const err = await postLock(tripId, d.id);
+                  if (!err) success();
+                  return err;
+                })
+              }
               onAttach={(optionId) =>
                 act(d.id, async () => {
                   const { error } = await createClient().from("options").update({ decision_id: d.id }).eq("id", optionId);
@@ -113,14 +121,22 @@ function DecisionRow({
   const locked = data.options.find((o) => o.id === d.locked_option_id);
   const free = data.options.filter((o) => !o.decision_id && !o.vetoed_at);
   const status = claiming(d, now) ? "Locking…" : !d.deadline ? "No deadline" : now ? (countdown(d.deadline, now) ?? "Time's up, locking…") : null;
+  // Celebrate only a lock that happens while this page is open (live or by the organizer), not old locks on every visit.
+  const [wasLocked, setWasLocked] = useState(!!locked);
+  const [justLocked, setJustLocked] = useState(false);
+  if (!!locked !== wasLocked) {
+    setWasLocked(!!locked);
+    if (locked) setJustLocked(true);
+  }
 
   return (
     <li className="grid gap-3 p-4">
       <div className="grid gap-0.5">
         <h3 className="text-[15px] leading-snug font-bold">{d.question}</h3>
         {locked ? (
-          <p className="flex items-start gap-1.5 text-[15px] font-semibold text-truck-green-ink">
+          <p className={cn("flex items-start gap-1.5 text-[15px] font-semibold text-truck-green-ink", justLocked && "board-stamp")}>
             <Lock aria-hidden className="mt-0.5 size-[18px] shrink-0" strokeWidth={1.8} />Locked: {locked.title}
+            {justLocked && <ConfettiOnMount when count={40} />}
           </p>
         ) : (
           <p className="flex items-center gap-1.5 text-[13px] text-muted-foreground">

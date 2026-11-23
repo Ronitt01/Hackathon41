@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
 import { CalendarDays, Heart, House, Wallet } from "lucide-react";
 
 // Each tab owns one paint; the band under the app bar and the active tab's indicator wear it.
@@ -26,6 +27,8 @@ export function TripTabs({ tripId }: { tripId: string }) {
   const pathname = usePathname();
   const base = `/trips/${tripId}`;
   const current = activeTab(pathname, base);
+  // Only a tab the user just switched to pops, never the one that was active on load.
+  const [switchedTo, setSwitchedTo] = useState<string | null>(null);
   return (
     <nav aria-label="Trip sections" className="fixed inset-x-0 bottom-0 z-20 border-t bg-card pb-[env(safe-area-inset-bottom)]">
       <div className="mx-auto grid h-16 max-w-md grid-cols-4">
@@ -37,11 +40,12 @@ export function TripTabs({ tripId }: { tripId: string }) {
               key={t.label}
               href={base + t.href}
               aria-current={active ? "page" : undefined}
-              className={`-mt-px flex flex-col items-center justify-center gap-0.5 border-t-4 text-[13px] ${
+              onClick={() => setSwitchedTo(t.label)}
+              className={`press -mt-px flex flex-col items-center justify-center gap-0.5 border-t-4 text-[13px] ${
                 active ? "border-paint font-bold text-ink" : "border-transparent text-muted-foreground"
               }`}
             >
-              <Icon aria-hidden className="size-[22px]" strokeWidth={active ? 2.2 : 1.8} />
+              <Icon aria-hidden className={`size-[22px] ${active && switchedTo === t.label ? "pop" : ""}`} strokeWidth={active ? 2.2 : 1.8} />
               {t.label}
             </Link>
           );

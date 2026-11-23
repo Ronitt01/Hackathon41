@@ -3,12 +3,16 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Check, Coffee, Lock, Wallet } from "lucide-react";
+import { useToast } from "@/components/kafila/toast";
 import { Button } from "@/components/ui/button";
+import { success, tap } from "@/lib/haptics";
 import { averageLine, signalLines, type MoodSummary } from "@/lib/mood";
 import { createClient } from "@/lib/supabase/client";
 import { errorMessage } from "@/lib/supabase/auth";
 
 const LEVELS = ["Wiped", "Low", "Okay", "Good", "Great"];
+// Said back to you (and only you) once today's energy is saved.
+const LINES = ["Rest up. Sit the next one out if you need to.", "Running on chai.", "Steady. Pace yourself.", "Good to go.", "Full josh!"];
 const SIGNALS = [
   { kind: "need_break", label: "I need a break", Icon: Coffee },
   { kind: "low_cash", label: "Low on cash", Icon: Wallet },
@@ -21,6 +25,8 @@ export function MoodPulse({ tripId, meId, today, energy, sent, summary }: Props)
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [picked, setPicked] = useState<number | null>(null);
+  const toast = useToast();
   const lines = signalLines(summary);
 
   async function run(work: () => PromiseLike<{ error: unknown }>) {
@@ -29,11 +35,17 @@ export function MoodPulse({ tripId, meId, today, energy, sent, summary }: Props)
     setPending(false);
     setError(error ? errorMessage(error) : null);
     if (!error) router.refresh();
+    return !error;
   }
 
   const checkIn = (value: number) =>
     run(() => createClient().from("mood_checkins").upsert({ member_id: meId, trip_id: tripId, day: today, energy: value }, { onConflict: "member_id,day" }));
-  const signal = (kind: string) => run(() => createClient().from("signals").insert({ member_id: meId, trip_id: tripId, kind }));
+  const signal = async (kind: string) => {
+    if (await run(() => createClient().from("signals").insert({ member_id: meId, trip_id: tripId, kind }))) {
+      success();
+      toast("Sent anonymously. Nobody knows it's you.", { tone: "success" });
+    }
+  };
 
   return (
     <div className="grid gap-4">
@@ -49,12 +61,17 @@ export function MoodPulse({ tripId, meId, today, energy, sent, summary }: Props)
                 type="button"
                 aria-pressed={on}
                 disabled={pending}
-                onClick={() => checkIn(value)}
-                className={`grid min-h-14 place-items-center rounded-xl border py-1.5 leading-tight disabled:opacity-60 ${
+                onClick={() => {
+                  tap();
+                  setPicked(value);
+                  checkIn(value);
+                }}
+                className={`press grid min-h-14 place-items-center rounded-xl border py-1.5 leading-tight disabled:opacity-60 ${
                   on ? "border-truck-green-ink bg-truck-green-ink text-white" : "border-input bg-card hover:bg-muted"
                 }`}
               >
-                <span className="text-[18px] font-bold tabular">{value}</span>
+                {/* Pops once when your new pick lands (the class is added only then). */}
+                <span className={`text-[18px] font-bold tabular ${on && picked === value ? "pop" : ""}`}>{value}</span>
                 <span className="text-[13px] font-semibold">{word}</span>
               </button>
             );
@@ -62,7 +79,7 @@ export function MoodPulse({ tripId, meId, today, energy, sent, summary }: Props)
         </div>
         <p className="flex items-center gap-1.5 text-[13px] text-muted-foreground">
           <Lock aria-hidden strokeWidth={1.8} className="size-4" />
-          {energy ? "Saved for today. You can change it any time." : "Only you see your answer."}
+          {energy ? `${LINES[energy - 1] ?? ""} Saved for today; change it any time.` : "Only you see your answer."}
         </p>
       </fieldset>
 

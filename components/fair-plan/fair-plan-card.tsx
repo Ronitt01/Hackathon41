@@ -22,7 +22,10 @@ export async function FairPlanCard({ tripId, planId }: { tripId: string; planId:
   return (
     <>
       {scores.length > 0 ? ( // scores exist only once a fair plan was computed; a trip's starter plan has none
-        <PaintedBoard>Fits everyone&apos;s budget</PaintedBoard>
+        // Keyed by plan so a new fair plan re-stamps the board; MakeFairPlan bursts confetti from #fair-board.
+        <div id="fair-board" key={planId}>
+          <PaintedBoard>Fits everyone&apos;s budget</PaintedBoard>
+        </div>
       ) : (
         <section className="grid gap-1" aria-labelledby="fair-plan">
           <h2 id="fair-plan" className="text-[17px] leading-snug font-bold">Fair plan</h2>
@@ -33,7 +36,7 @@ export async function FairPlanCard({ tripId, planId }: { tripId: string; planId:
       )}
 
       {scores.length > 0 && (
-        <section className="grid gap-2" aria-labelledby="fair-meter">
+        <section key={planId} className="grid gap-2" aria-labelledby="fair-meter">
           <h2 id="fair-meter" className="text-[15px] leading-snug font-bold">How well it fits everyone</h2>
           <ul className="grid grid-cols-[104px_1fr_40px] items-center gap-x-2 gap-y-1.5">
             {scores.map((s, i) => (

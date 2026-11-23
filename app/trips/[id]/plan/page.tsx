@@ -1,5 +1,6 @@
 import { FairPlanCard } from "@/components/fair-plan/fair-plan-card";
 import { MakeFairPlan } from "@/components/fair-plan/make-fair-plan";
+import { ChaiNote } from "@/components/itinerary/chai-note";
 import { STOP_COLUMNS } from "@/components/itinerary/days";
 import { Itinerary, type Rating, type Stop } from "@/components/itinerary/itinerary";
 import { TripDetails } from "@/components/itinerary/trip-details";
@@ -62,7 +63,7 @@ export default async function PlanPage({ params }: { params: Promise<{ id: strin
           <p className="text-[13px] text-muted-foreground">Anyone in the trip can add, edit, reorder and rate stops.</p>
         </div>
         {!trip.active_plan_id ? (
-          <p className="text-muted-foreground">No plan picked yet. Once the group chooses one, it shows up here.</p>
+          <ChaiNote>No plan yet, so put the kettle on. Once the group picks one, it shows up here.</ChaiNote>
         ) : error ? (
           <p role="alert" className="text-destructive">Couldn&apos;t load the plan: {error.message}</p>
         ) : (

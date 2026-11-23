@@ -4,7 +4,11 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Check } from "lucide-react";
 import { PledgeEditor } from "@/components/crew/pledge-editor";
+import { burst } from "@/components/kafila/confetti";
+import { StickerAvatar } from "@/components/kafila/sticker-avatar";
+import { useToast } from "@/components/kafila/toast";
 import { Button } from "@/components/ui/button";
+import { success } from "@/lib/haptics";
 import { inr } from "@/lib/money";
 import { createClient } from "@/lib/supabase/client";
 import { errorMessage } from "@/lib/supabase/auth";
@@ -13,11 +17,6 @@ export type Member = { id: string; display_name: string; role: string; status: s
 
 const MEMBER_COLUMNS = "id, display_name, role, status, task_role";
 const STATUS_LABEL: Record<string, string> = { confirmed: "In", maybe: "Maybe", dropped: "Dropped out" };
-// Avatar paints rotate by position; green uses the darker text green so white initials stay ≥4.5:1.
-const AVATAR = ["bg-truck-yellow text-ink", "bg-truck-red text-white", "bg-truck-green-ink text-white", "bg-ink text-wash"];
-
-const initials = (name: string) =>
-  name.trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase() ?? "").join("") || "?";
 
 /**
  * Members of a trip, kept live with Supabase Realtime (someone joins → appears on every phone).
@@ -37,6 +36,7 @@ export function MemberList({
   pledgePaise?: number;
 }) {
   const router = useRouter();
+  const toast = useToast();
   const [members, setMembers] = useState(initial);
   const [pledge, setPledge] = useState(pledgePaise ?? 0);
   const [pending, setPending] = useState(false);
@@ -64,12 +64,17 @@ export function MemberList({
 
   const me = members.find((m) => m.id === meId);
 
-  async function confirm() {
+  async function confirm(e: React.MouseEvent<HTMLButtonElement>) {
+    const r = e.currentTarget.getBoundingClientRect(); // read now: the button goes away once I'm in
     setPending(true);
     setError(null);
     const supabase = createClient();
     const { error } = await supabase.rpc("confirm_pledge", { p_trip: tripId });
     if (!error) {
+      // Only on my phone, and never with the amount: the toast says I'm in, not what I paid.
+      success();
+      burst({ origin: { x: r.left + r.width / 2, y: r.top + r.height / 2 } });
+      toast("You're in. Pack your bags!", { tone: "success" });
       const { data } = await supabase.from("members").select(MEMBER_COLUMNS).eq("trip_id", tripId).order("joined_at");
       if (data) setMembers(data);
       router.refresh();
@@ -81,13 +86,11 @@ export function MemberList({
   return (
     <div className="grid gap-3">
       <ul className="divide-y overflow-hidden rounded-xl border bg-card" aria-label="Trip members">
-        {members.map((m, i) => (
+        {members.map((m) => (
           <li key={m.id} className="flex min-h-14 items-center gap-3 px-4 py-2.5">
-            <span
-              aria-hidden
-              className={`grid size-9 shrink-0 place-items-center rounded-full text-[13px] font-bold ${AVATAR[i % AVATAR.length]}`}
-            >
-              {initials(m.display_name)}
+            {/* The name is right beside it, so the sticker stays out of the accessibility tree. */}
+            <span aria-hidden className="inline-flex">
+              <StickerAvatar name={m.display_name} />
             </span>
             <span className="grid min-w-0 flex-1">
               <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">

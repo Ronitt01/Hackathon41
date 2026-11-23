@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Bungee, Hind } from "next/font/google";
 import { OfflineBanner } from "@/components/offline-banner";
 import { SwRegister } from "@/components/sw-register";
+import { ToastProvider } from "@/components/kafila/toast";
 import "./globals.css";
 
 // Bungee: sign-painter lettering, only for the one painted board per screen. Hind: everything else.
@@ -23,7 +24,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col">
         <SwRegister />
         <OfflineBanner />
-        {children}
+        <ToastProvider>{children}</ToastProvider>
       </body>
     </html>
   );

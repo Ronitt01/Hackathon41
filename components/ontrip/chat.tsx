@@ -1,8 +1,11 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { SendHorizontal } from "lucide-react";
+import { enter } from "@/components/ontrip/enter";
 import { Button } from "@/components/ui/button";
+import { tap } from "@/lib/haptics";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/client";
@@ -26,6 +29,13 @@ export function Chat({ tripId, meId, names: initialNames, initial }: { tripId: s
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const log = useRef<HTMLOListElement>(null);
+  // Messages already on screen at load don't animate; only ones that arrive after do.
+  const seen = useRef(new Set(initial.map((m) => m.id)));
+  const arrive = (id: string, mine: boolean) => (el: HTMLLIElement | null) => {
+    if (!el || seen.current.has(id)) return;
+    seen.current.add(id);
+    enter(el, mine ? "translateX(24px) scale(0.96)" : "translateY(12px)"); // mine whooshes in from the send button
+  };
 
   const add = (m: ChatMessage) => setMessages((list) => (list.some((x) => x.id === m.id) ? list : [...list, m]));
 
@@ -61,6 +71,7 @@ export function Chat({ tripId, meId, names: initialNames, initial }: { tripId: s
     e.preventDefault();
     const body = draft.trim();
     if (!body) return;
+    tap();
     setSending(true);
     const { data, error } = await createClient().from("messages").insert({ trip_id: tripId, member_id: meId, body: body.slice(0, 2000) }).select(COLUMNS).single();
     setSending(false);
@@ -73,13 +84,17 @@ export function Chat({ tripId, meId, names: initialNames, initial }: { tripId: s
   return (
     <div className="grid gap-2">
       {messages.length === 0 ? (
-        <p className="rounded-xl border border-dashed px-4 py-6 text-center text-muted-foreground">No messages yet. Say hi to the gang.</p>
+        <div className="grid justify-items-center gap-1 rounded-xl border border-dashed px-4 py-5 text-center">
+          <Image src="/illustrations/chai.svg" alt="" width={64} height={64} />
+          <p className="font-semibold">Quiet in here. Chai&apos;s getting cold.</p>
+          <p className="text-[13px] text-muted-foreground">Say hi to the gang, or ask who&apos;s up for breakfast.</p>
+        </div>
       ) : (
         <ol ref={log} role="log" aria-label="Group chat messages" className="grid max-h-96 content-start gap-2 overflow-y-auto overscroll-contain py-1">
           {messages.map((m) => {
             const mine = m.member_id === meId;
             return (
-              <li key={m.id} className={`grid max-w-[85%] gap-0.5 ${mine ? "justify-self-end text-right" : "justify-self-start"}`}>
+              <li key={m.id} ref={arrive(m.id, mine)} className={`grid max-w-[85%] gap-0.5 ${mine ? "justify-self-end text-right" : "justify-self-start"}`}>
                 <span className="text-[13px] text-muted-foreground">
                   {mine ? "You" : (names[m.member_id] ?? "Someone")} · <time dateTime={m.created_at}>{stamp(m.created_at)}</time>
                 </span>

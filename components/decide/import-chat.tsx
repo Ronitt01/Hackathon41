@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ShieldCheck } from "lucide-react";
+import { useToast } from "@/components/kafila/toast";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { MAX_CHAT_CHARS, type Proposal } from "@/lib/chat-import";
@@ -16,6 +17,7 @@ export function ImportChat({ tripId, meId, onAdded }: { tripId: string; meId: st
   const [proposals, setProposals] = useState<Proposal[] | null>(null);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const toast = useToast();
 
   async function onRead(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -36,7 +38,11 @@ export function ImportChat({ tripId, meId, onAdded }: { tripId: string; meId: st
       });
       const body = (await res.json().catch(() => null)) as { proposals?: Proposal[]; error?: string } | null;
       if (!res.ok || !body?.proposals) setError(body?.error ?? "Couldn't read that chat. Please try again.");
-      else setProposals(body.proposals);
+      else {
+        setProposals(body.proposals);
+        const n = body.proposals.length;
+        if (n > 0) toast(`Pulled ${n} ${n === 1 ? "idea" : "ideas"} from the chat`, { tone: "success" });
+      }
     } catch (err) {
       setError(errorMessage(err));
     }

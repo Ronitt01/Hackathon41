@@ -12,7 +12,7 @@ import type { MoneyData } from "./data";
 
 const FIELD = "h-11 bg-card text-[15px]";
 const CHIP =
-  "group/chip flex h-11 w-fit cursor-pointer items-center gap-1.5 rounded-full border border-ink bg-card px-4 text-[15px] font-semibold text-ink has-checked:border-truck-green-ink has-checked:bg-truck-green-ink has-checked:text-white has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-truck-green-ink";
+  "press group/chip flex h-11 w-fit cursor-pointer items-center gap-1.5 rounded-full border border-ink bg-card px-4 text-[15px] font-semibold text-ink has-checked:border-truck-green-ink has-checked:bg-truck-green-ink has-checked:text-white has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-truck-green-ink";
 const rupees = (paise: number) => String(paise / 100);
 
 /** M-4: rooms at the stay, private per-bed ratings, the organizer's fair split, and accepting your own bed. */

@@ -4,6 +4,8 @@ import { useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Download, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ReflectorBar } from "@/components/kafila/reflector-bar";
+import { useToast } from "@/components/kafila/toast";
+import { success } from "@/lib/haptics";
 import type { WrappedCard } from "@/lib/wrapped";
 
 // Truck-paint fields: Tailwind class for the screen, matching hex for the canvas export. Every pair keeps text ≥ 4.5:1.
@@ -27,8 +29,8 @@ const icon = { "aria-hidden": true, strokeWidth: 1.8, className: "size-5" } as c
 export function WrappedStories({ cards, summary }: { cards: WrappedCard[]; summary: string }) {
   const scroller = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState(0);
-  const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const toast = useToast(); // owns the app's one polite live region, so no status line of our own
 
   // Smoothness comes from motion-safe:scroll-smooth, so reduced motion jumps instead.
   function go(i: number) {
@@ -40,22 +42,22 @@ export function WrappedStories({ cards, summary }: { cards: WrappedCard[]; summa
   }
 
   async function share() {
-    setStatus(null);
     setError(null);
     try {
       if (navigator.share) {
         await navigator.share({ title: "Trip Wrapped", text: summary });
+        toast("Shared. Chalo!", { tone: "success" });
       } else {
         await navigator.clipboard.writeText(summary);
-        setStatus("Recap copied. Paste it in your group chat.");
+        toast("Recap copied. Paste it in your group chat.", { tone: "success" });
       }
+      success();
     } catch (err) {
       if ((err as Error).name !== "AbortError") setError("Couldn't share. Try again.");
     }
   }
 
   async function save() {
-    setStatus(null);
     setError(null);
     const card = cards[active];
     const canvas = await drawCard(card, PALETTE[active % PALETTE.length]);
@@ -68,6 +70,8 @@ export function WrappedStories({ cards, summary }: { cards: WrappedCard[]; summa
       link.download = `kafila-wrapped-${active + 1}.png`;
       link.click();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
+      success();
+      toast("Saved — post it on your story", { tone: "success" });
     }, "image/png");
   }
 
@@ -95,7 +99,11 @@ export function WrappedStories({ cards, summary }: { cards: WrappedCard[]; summa
             key={card.id}
             aria-roledescription="slide"
             aria-label={`${i + 1} of ${cards.length}`}
-            className="chevron-band flex aspect-[9/16] w-full shrink-0 snap-center rounded-md p-2.5"
+            // First card lands like a stamp; cards off to the side sit a touch smaller and snap up as they arrive.
+            // snap-always stops a fling at each card, so a swipe is always exactly one card.
+            className={`chevron-band flex aspect-[9/16] w-full shrink-0 snap-center snap-always rounded-md p-2.5 transition-[scale] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+              i === 0 ? "board-stamp" : ""
+            } ${i === active ? "" : "motion-safe:scale-[0.94]"}`}
           >
             {/* Rear-board: chevron band frame, ink keyline, lettering first and its context line under it. */}
             <div className={`flex flex-1 flex-col rounded-[3px] border-2 border-ink p-7 ${PALETTE[i % PALETTE.length].className}`}>
@@ -142,17 +150,15 @@ export function WrappedStories({ cards, summary }: { cards: WrappedCard[]; summa
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <Button className="h-11" onClick={share}>
+        <Button className="press h-11" onClick={share}>
           <Share2 {...icon} />
           Share
         </Button>
-        <Button variant="outline" className="h-11 bg-card" onClick={save}>
+        <Button variant="outline" className="press h-11 bg-card" onClick={save}>
           <Download {...icon} />
           Save card as image
         </Button>
       </div>
-      {/* Always mounted so screen readers announce the text when it changes. */}
-      <p aria-live="polite" className="text-[13px] text-muted-foreground">{status}</p>
       {error && <p role="alert" className="text-[13px] text-destructive">{error}</p>}
     </section>
   );

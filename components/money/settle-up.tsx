@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { ArrowRight, Check, Smartphone } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { useToast } from "@/components/kafila/toast";
+import { success, tap } from "@/lib/haptics";
 import { inr } from "@/lib/money";
 import { minimiseTransfers, type Transfer } from "@/lib/settle";
 import { createClient } from "@/lib/supabase/client";
@@ -14,6 +16,9 @@ import { shortDate, type MoneyData } from "./data";
 export function SettleUp({ tripId, meId, data, onChange }: { tripId: string; meId: string | null; data: MoneyData; onChange: () => void }) {
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // The row just paid, tied to the data it was paid against: the next refresh retires it on its own.
+  const [paid, setPaid] = useState<{ key: string; data: MoneyData } | null>(null);
+  const toast = useToast();
   const member = (id: string) => data.members.find((m) => m.id === id);
   const name = (id: string) => (id === meId ? "You" : (member(id)?.display_name ?? "Someone"));
 
@@ -40,8 +45,11 @@ export function SettleUp({ tripId, meId, data, onChange }: { tripId: string; meI
       paid_at: new Date().toISOString(),
     });
     setBusy(null);
-    if (error) setError(errorMessage(error));
-    else onChange();
+    if (error) return setError(errorMessage(error));
+    setPaid({ key, data });
+    success();
+    toast("Marked paid. One less thing to chase.", { tone: "success" });
+    onChange();
   }
 
   return (
@@ -61,8 +69,9 @@ export function SettleUp({ tripId, meId, data, onChange }: { tripId: string; meI
             const vpa = payee?.upi_vpa?.trim() ?? "";
             const key = `${t.from}>${t.to}`;
             const mine = t.from === meId || t.to === meId;
+            const done = paid?.key === key && paid.data === data;
             return (
-              <li key={key} className="grid gap-3 py-3">
+              <li key={key} className={`grid gap-3 py-3 transition-opacity duration-300 ${done ? "opacity-60" : ""}`}>
                 <p className="flex items-baseline justify-between gap-3">
                   <span className="min-w-0">
                     <span className="font-semibold">{name(t.from)}</span> {t.from === meId ? "pay" : "pays"}{" "}
@@ -74,16 +83,23 @@ export function SettleUp({ tripId, meId, data, onChange }: { tripId: string; meI
                   <div className="grid grid-cols-[repeat(auto-fit,minmax(9.5rem,1fr))] gap-2">
                     {t.from === meId &&
                       (isValidVpa(vpa) ? (
-                        <a href={upiLink({ vpa, name: payee!.display_name, amountPaise: t.amount, note: "Kafila trip settle-up" })} className={buttonVariants({ className: "w-full" })}>
+                        <a href={upiLink({ vpa, name: payee!.display_name, amountPaise: t.amount, note: "Kafila trip settle-up" })} onClick={tap} className={buttonVariants({ className: "press w-full" })}>
                           <Smartphone aria-hidden strokeWidth={1.8} className="size-[18px]" />
                           Pay {inr(t.amount)} with UPI
                         </a>
                       ) : (
                         <p className="self-center text-[13px] text-muted-foreground">Ask {name(t.to)} to add their UPI ID.</p>
                       ))}
-                    <Button variant="outline" className="w-full bg-card" disabled={busy === key} onClick={() => record(t)}>
-                      <Check aria-hidden strokeWidth={1.8} className="size-[18px]" />
-                      {busy === key ? "Saving…" : t.from === meId ? "Mark as paid" : "Mark as received"}
+                    <Button variant="outline" className="press w-full bg-card" disabled={busy === key || done} onClick={() => record(t)}>
+                      {/* Remounts when paid so the tick draws itself in left to right (the tape-fill wipe; off under reduced motion). */}
+                      <Check
+                        key={done ? "done" : "idle"}
+                        aria-hidden
+                        strokeWidth={done ? 3 : 1.8}
+                        className={done ? "tape-fill size-[18px] text-truck-green-ink" : "size-[18px]"}
+                        style={done ? { animationDuration: "400ms" } : undefined} // .tape-fill is unlayered, so a utility can't retime it
+                      />
+                      {done ? "Paid" : busy === key ? "Saving…" : t.from === meId ? "Mark as paid" : "Mark as received"}
                     </Button>
                   </div>
                 )}

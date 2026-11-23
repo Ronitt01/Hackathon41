@@ -3,7 +3,9 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useToast } from "@/components/kafila/toast";
 import { Button } from "@/components/ui/button";
+import { tap } from "@/lib/haptics";
 import { addDays, bestWindows, dayMonth, holidayOn, monthCells } from "@/lib/dates";
 import { createClient } from "@/lib/supabase/client";
 import { errorMessage } from "@/lib/supabase/auth";
@@ -37,6 +39,7 @@ export function BestDates({
   initial: Busy[];
 }) {
   const router = useRouter();
+  const toast = useToast();
   const [busy, setBusy] = useState(initial);
   const [month, setMonth] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -54,6 +57,7 @@ export function BestDates({
   const windows = bestWindows({ today, length, busyByMember: memberIds.map((id) => counted.filter((b) => b.member_id === id).map((b) => b.busy_on)) });
 
   async function toggle(date: string) {
+    tap();
     setError(null);
     const supabase = createClient();
     const was = mine.has(date);
@@ -74,6 +78,7 @@ export function BestDates({
     const { error } = await createClient().from("trips").update({ start_date: start, end_date: end }).eq("id", tripId);
     setSaving(null);
     if (error) return setError(errorMessage(error));
+    toast("Trip dates set", { tone: "success" });
     router.refresh();
   }
 
@@ -96,7 +101,7 @@ export function BestDates({
             <ChevronRight aria-hidden strokeWidth={1.8} className="size-5" />
           </Button>
         </div>
-        <div className="grid grid-cols-7 justify-items-center text-[12px] font-semibold text-muted-foreground" aria-hidden>
+        <div className="grid grid-cols-7 justify-items-center text-[13px] font-semibold text-muted-foreground" aria-hidden>
           {WEEKDAYS.map(([short, long]) => (
             <span key={long}>{short}</span>
           ))}
@@ -116,13 +121,13 @@ export function BestDates({
                 aria-label={label}
                 disabled={date <= today || date > last}
                 onClick={() => toggle(date)}
-                className={`relative grid size-11 place-items-center rounded-full text-[15px] tabular disabled:text-muted-foreground/60 ${
+                className={`press relative grid size-11 place-items-center rounded-full text-[15px] tabular disabled:text-muted-foreground/60 ${
                   isMine ? "bg-truck-green-ink font-semibold text-white" : "hover:bg-muted"
                 } ${holiday ? "font-bold underline decoration-2 underline-offset-4" : ""}`}
               >
                 {Number(date.slice(8))}
                 {others > 0 && (
-                  <span aria-hidden className={`absolute top-0.5 right-0.5 text-[10px] leading-none font-bold ${isMine ? "text-white" : "text-muted-foreground"}`}>
+                  <span aria-hidden className={`absolute top-0.5 right-0.5 text-[13px] leading-none font-bold ${isMine ? "text-white" : "text-muted-foreground"}`}>
                     {others}
                   </span>
                 )}
@@ -130,7 +135,7 @@ export function BestDates({
             );
           })}
         </div>
-        <p className="px-1 pb-1 text-[12px] text-muted-foreground">
+        <p className="px-1 pb-1 text-[13px] text-muted-foreground">
           Green: you&apos;re busy. Small number: friends busy. Underlined: public holiday.
         </p>
       </div>
@@ -140,12 +145,19 @@ export function BestDates({
         <p className="text-[13px] text-muted-foreground">No {length}-day window fits in the next {HORIZON} days.</p>
       ) : (
         <ol className="grid" aria-label="Top date windows">
-          {windows.map((w) => {
+          {windows.map((w, i) => {
             const isCurrent = current.start === w.start && current.end === w.end;
             return (
-              <li key={w.start} className="flex items-center gap-3 border-t py-2">
+              <li
+                key={w.start}
+                style={{ animationDelay: `${i * 60}ms` }}
+                className="flex items-center gap-3 border-t py-2 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2 fill-mode-backwards duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]"
+              >
                 <div className="min-w-0 flex-1">
-                  <p className="tabular font-semibold">{dayMonth(w.start)} – {dayMonth(w.end)}</p>
+                  <p className="flex flex-wrap items-center gap-x-2 tabular font-semibold">
+                    {dayMonth(w.start)} – {dayMonth(w.end)}
+                    {i === 0 && <span className="-rotate-3 rounded-sm bg-truck-green-ink px-1.5 text-[13px] leading-5 font-bold text-white">Best pick</span>}
+                  </p>
                   <p className="text-[13px] text-muted-foreground">{w.reasons.join(" · ")}</p>
                 </div>
                 {isCurrent ? (

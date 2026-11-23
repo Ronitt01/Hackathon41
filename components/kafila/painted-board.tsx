@@ -1,19 +1,24 @@
 import { cn } from "@/lib/utils";
+import { ConfettiOnMount } from "./confetti";
 
 /**
  * The world's signature: a truck rear-board. ONE per screen, for the screen's verdict or headline
  * ("FITS EVERYONE'S BUDGET", "₹4,000 TO GO"). Everything else on the page stays a clean working UI.
  * The lettering speaks first; `note` is an optional plain line UNDER it (never a label above it).
+ * `celebrate` fires one truck-paint confetti burst from the board when it mounts, for a real moment
+ * (plan fits, all square, goal reached). Pass a string to fire at most once per session for that key.
  */
 export function PaintedBoard({
   children,
   note,
   tone = "yellow",
+  celebrate,
   className,
 }: {
   children: React.ReactNode;
   note?: string;
   tone?: "yellow" | "red";
+  celebrate?: boolean | string;
   className?: string;
 }) {
   return (
@@ -34,6 +39,7 @@ export function PaintedBoard({
         </p>
         {note && <p className="mt-1 text-[13px] font-semibold">{note}</p>}
       </div>
+      {celebrate && <ConfettiOnMount when sessionKey={typeof celebrate === "string" ? celebrate : undefined} />}
     </section>
   );
 }

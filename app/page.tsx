@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { GoogleButton } from "@/components/google-button";
@@ -16,8 +17,17 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ n
     : { data: [] };
 
   return (
-    <main className="mx-auto grid w-full max-w-md content-start gap-6 px-4 pt-8 pb-12">
+    <main className="mx-auto grid w-full max-w-md content-start gap-6 px-4 pt-6 pb-12">
       <header className="grid gap-3">
+        {/* The truck pulls up into frame once; under reduced motion it is simply parked. */}
+        <Image
+          src="/illustrations/truck.svg"
+          alt="A hand-painted Indian goods truck seen from behind, Horn OK Please on its tailboard"
+          width={360}
+          height={240}
+          priority
+          className="mx-auto h-auto w-full max-w-[280px] transition-[translate,opacity] duration-[450ms] ease-[cubic-bezier(0.16,1,0.3,1)] motion-safe:starting:-translate-x-10 motion-safe:starting:opacity-0"
+        />
         <PaintedBoard className="[&_p:first-child]:py-1 [&_p:first-child]:text-[36px]">Kafila</PaintedBoard>
         <div className="grid gap-1">
           <h1 className="text-[22px] leading-tight font-bold text-balance">Plan the trip, not the drama.</h1>
@@ -44,7 +54,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ n
           <ul className="divide-y overflow-hidden rounded-xl border bg-card">
             {trips.map((t) => (
               <li key={t.id}>
-                <Link href={`/trips/${t.id}`} className="flex min-h-13 items-center gap-3 px-4 py-3 font-semibold hover:bg-muted">
+                <Link href={`/trips/${t.id}`} className="press flex min-h-13 items-center gap-3 px-4 py-3 font-semibold hover:bg-muted">
                   <span className="min-w-0 flex-1 truncate">{t.name}</span>
                   <ChevronRight aria-hidden strokeWidth={1.8} className="size-5 text-muted-foreground" />
                 </Link>

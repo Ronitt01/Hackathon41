@@ -5,6 +5,8 @@ import { Check, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useToast } from "@/components/kafila/toast";
+import { tap } from "@/lib/haptics";
 import { inr, splitEqually, toPaise } from "@/lib/money";
 import { splitItems, type SplitLine } from "@/lib/split";
 import { createClient } from "@/lib/supabase/client";
@@ -19,10 +21,10 @@ const FIELD = "h-11 bg-card text-[15px]";
 const SELECT = "h-11 w-full rounded-lg border border-input bg-card px-2.5 text-[15px]";
 // Toggle chip: the real checkbox is visually hidden, so the chip draws its own focus ring and check mark.
 const CHIP =
-  "group/chip flex h-10 cursor-pointer items-center gap-1.5 rounded-full border border-ink bg-card px-3.5 text-[13px] font-semibold text-ink has-checked:border-truck-green has-checked:bg-truck-green has-checked:text-white has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-truck-green";
+  "press group/chip flex h-10 cursor-pointer items-center gap-1.5 rounded-full border border-ink bg-card px-3.5 text-[13px] font-semibold text-ink has-checked:border-truck-green-ink has-checked:bg-truck-green-ink has-checked:text-white has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-truck-green";
 const CHIP_CHECK = "hidden size-4 group-has-checked/chip:block";
 const SEGMENT =
-  "flex h-10 cursor-pointer items-center justify-center rounded-md text-[13px] font-semibold text-ink has-checked:bg-truck-green has-checked:text-white has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-truck-green";
+  "press flex h-10 cursor-pointer items-center justify-center rounded-md text-[13px] font-semibold text-ink has-checked:bg-truck-green-ink has-checked:text-white has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-truck-green";
 const SPLITS: [SplitType, string][] = [["equal", "Equally"], ["unequal", "By amount"], ["items", "By item"]];
 
 /** C-4 add an expense; M-3 item-level split (manual lines). Shares always add up exactly to the amount. */
@@ -42,6 +44,7 @@ export function ExpenseForm(props: { tripId: string; meId: string | null; member
   const [lines, setLines] = useState<Line[]>(() => [{ name: "", amount: "", kind: "item", claimers: allIds }]);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const toast = useToast();
 
   const total = toPaise(amount);
   const name = (id: string) => active.find((m) => m.id === id)?.display_name ?? "Someone";
@@ -121,6 +124,8 @@ export function ExpenseForm(props: { tripId: string; meId: string | null; member
       setAmount("");
       setCustom({});
       setLines([{ name: "", amount: "", kind: "item", claimers: allIds }]);
+      tap();
+      toast("Added. Split done.", { tone: "success" });
       onChange();
     } catch (err) {
       setError(errorMessage(err));

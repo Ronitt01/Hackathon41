@@ -68,12 +68,17 @@ export function MeetMiddle({ myMemberId, myCity, otherCities }: { myMemberId: st
         <>
           <ol className="grid">
             {top.map((d, i) => (
-              <li key={d.destination} className="grid gap-0.5 border-t py-2">
+              <li
+                key={d.destination}
+                style={{ animationDelay: `${i * 60}ms` }}
+                className="grid gap-0.5 border-t py-2 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2 fill-mode-backwards duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]"
+              >
                 <p className="flex items-baseline justify-between gap-2">
-                  <span className="font-semibold">{d.destination}</span>
-                  <span className={`tabular text-[13px] font-semibold ${i === 0 ? "text-truck-green-ink" : "text-muted-foreground"}`}>
-                    Travel gap {inr(d.spreadPaise)}{i === 0 && " · fairest"}
+                  <span className="flex flex-wrap items-center gap-x-2 font-semibold">
+                    {d.destination}
+                    {i === 0 && <span className="-rotate-3 rounded-sm bg-truck-green-ink px-1.5 text-[13px] leading-5 font-bold text-white">Best pick</span>}
                   </span>
+                  <span className="tabular text-[13px] font-semibold text-muted-foreground">Travel gap {inr(d.spreadPaise)}</span>
                 </p>
                 {i === 0 ? (
                   <p className="text-[13px] text-muted-foreground">

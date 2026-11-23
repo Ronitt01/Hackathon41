@@ -63,9 +63,12 @@ export default async function ParentPage({ params }: { params: Promise<{ token: 
     <Shell>
       <h1 className="sr-only">{trip.name}</h1>
       <PaintedBoard note={when}>{trip.name}</PaintedBoard>
-      <p className="text-[15px]">
-        You&apos;re following <strong>{member.display_name}</strong>&apos;s trip. This page is read-only and {member.display_name} can turn it off any time.
-      </p>
+      <div className="grid gap-1">
+        <p className="text-[17px] font-semibold">{member.display_name} is in good hands. Here&apos;s the plan.</p>
+        <p className="text-[15px]">
+          You&apos;re following <strong>{member.display_name}</strong>&apos;s trip with their group. Open this page any time for the latest; it&apos;s read-only and {member.display_name} can turn it off whenever they like.
+        </p>
+      </div>
 
       {link.share_location && (
         <section aria-labelledby="where" className="grid gap-2 rounded-xl border bg-card p-4">
@@ -113,7 +116,7 @@ export default async function ParentPage({ params }: { params: Promise<{ token: 
             </div>
           ))
         ) : (
-          <p className="text-muted-foreground">The group hasn&apos;t made a plan yet. Check back soon.</p>
+          <p className="text-muted-foreground">The group is still choosing what to do. The plan will show up here as soon as they settle it.</p>
         )}
       </section>
     </Shell>
@@ -124,7 +127,7 @@ function Shell({ children }: { children: React.ReactNode }) {
   return (
     <main className="mx-auto grid w-full max-w-md content-start gap-4 px-4 pt-6 pb-12">
       {children}
-      <p className="text-center text-[12px] font-bold tracking-[0.12em] uppercase text-muted-foreground">Kafila</p>
+      <p className="text-center text-[13px] font-bold tracking-[0.12em] uppercase text-muted-foreground">Kafila</p>
     </main>
   );
 }

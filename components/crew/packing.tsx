@@ -2,7 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Check, CircleAlert, Plus, Trash2 } from "lucide-react";
+import { useToast } from "@/components/kafila/toast";
 import { Button } from "@/components/ui/button";
+import { tap } from "@/lib/haptics";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { claimAction, duplicateNote, groupPacking, itemKey, unclaimAction, type PackingItem, type PackingRow } from "@/lib/packing";
@@ -21,6 +23,8 @@ export function Packing({ tripId, meId, members, initial }: { tripId: string; me
   });
   const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const toast = useToast();
+  const [claimed, setClaimed] = useState<string | null>(null); // the item I just claimed pops its button
   const items = groupPacking(rows);
   const nameOf = (id: string) => (id === meId ? "You" : (members.find((m) => m.id === id)?.display_name ?? "Someone"));
 
@@ -61,10 +65,10 @@ export function Packing({ tripId, meId, members, initial }: { tripId: string; me
     if (await run((s) => s.from("packing_items").insert({ trip_id: tripId, name: clean }))) setName("");
   }
 
-  function claim(item: PackingItem) {
+  async function claim(item: PackingItem) {
     const step = claimAction(item, meId);
     if (!step) return;
-    run(async (s) => {
+    const ok = await run(async (s) => {
       if (step.kind === "take") {
         // Only take it if it is still unclaimed; if someone beat me to it, add my own row.
         const res = await s.from("packing_items").update({ member_id: meId }).eq("id", step.id).is("member_id", null).select("id");
@@ -72,6 +76,12 @@ export function Packing({ tripId, meId, members, initial }: { tripId: string; me
       }
       return s.from("packing_items").insert({ trip_id: tripId, name: item.name, member_id: meId });
     });
+    if (!ok) return;
+    tap();
+    setClaimed(item.key);
+    // "Bluetooth speaker" reads as "the bluetooth speaker"; acronyms like "UNO cards" stay as typed.
+    const thing = /^[A-Z][a-z]/.test(item.name) ? item.name[0].toLowerCase() + item.name.slice(1) : item.name;
+    toast(`You're bringing the ${thing}`, { tone: "success" });
   }
 
   function unclaim(item: PackingItem) {
@@ -101,7 +111,7 @@ export function Packing({ tripId, meId, members, initial }: { tripId: string; me
                   {note && (
                     <span className="flex items-center gap-1 text-[13px] font-semibold">
                       <CircleAlert aria-hidden strokeWidth={2} className="size-4 shrink-0" />
-                      {note}
+                      {note}. Party mode, or one too many?
                     </span>
                   )}
                 </span>
@@ -120,7 +130,7 @@ export function Packing({ tripId, meId, members, initial }: { tripId: string; me
                   type="button"
                   variant={mine ? "default" : "outline"}
                   aria-pressed={mine}
-                  className={`h-11 ${mine ? "bg-truck-green-ink text-white hover:bg-truck-green-ink/90" : ""}`}
+                  className={`h-11 ${mine ? "bg-truck-green-ink text-white hover:bg-truck-green-ink/90" : ""} ${mine && claimed === item.key ? "pop" : ""}`}
                   onClick={() => (mine ? unclaim(item) : claim(item))}
                 >
                   {mine && <Check aria-hidden strokeWidth={2.2} className="size-4" />}

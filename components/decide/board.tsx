@@ -149,7 +149,7 @@ export function DecideBoard({
       <div className="-mx-1 flex flex-wrap" role="group" aria-label="Filter by kind">
         {FILTERS.map((f, i) => (
           // 44px tap target around a 32px chip
-          <button key={f.label} type="button" className="group flex h-11 shrink-0 items-center px-1 outline-none" aria-pressed={i === filter} onClick={() => setFilter(i)}>
+          <button key={f.label} type="button" className="press group flex h-11 shrink-0 items-center px-1 outline-none" aria-pressed={i === filter} onClick={() => setFilter(i)}>
             <span
               className={cn(
                 CHIP,
@@ -164,9 +164,16 @@ export function DecideBoard({
       </div>
 
       {error && <p role="alert" className="text-[15px] text-destructive">{error}</p>}
-      {shown.length === 0 && (
+      {data.options.length === 0 ? (
+        <div className="grid justify-items-center gap-2 rounded-xl border border-dashed border-border bg-card px-4 py-8 text-center">
+          {/* eslint-disable-next-line @next/next/no-img-element -- static decorative SVG */}
+          <img src="/illustrations/chai.svg" alt="" width={96} height={96} className="size-24" />
+          <p className="text-[17px] font-bold">No options yet.</p>
+          <p className="text-[15px] text-muted-foreground">Drop the first one, someone has to. A stay, a café, a day out.</p>
+        </div>
+      ) : shown.length === 0 && (
         <p className="rounded-xl border border-dashed border-border bg-card px-4 py-8 text-center text-[15px] text-muted-foreground">
-          Nothing here yet. Add a stay, a café or a day out, and let the group react.
+          Nothing in {FILTERS[filter].label.toLowerCase()} yet. Add one and let the group react.
         </p>
       )}
       {shown.map((o) => (

@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-label="A cutting-chai glass beside a kettle">
+<path d="M10 136H150" stroke="#1A1410" stroke-width="2.5" stroke-linecap="round"/>
+<path d="M38 70C38 44 46 38 60 38S82 44 82 70" fill="none" stroke="#1A1410" stroke-width="4" stroke-linecap="round"/>
+<path d="M89 96L112 78L117 83L95 110Z" fill="#E4E7DF" stroke="#1A1410" stroke-width="3" stroke-linejoin="round"/>
+<path d="M24 132L30 78Q31 70 40 70H80Q89 70 90 78L96 132Z" fill="#E4E7DF" stroke="#1A1410" stroke-width="3" stroke-linejoin="round"/>
+<rect x="30" y="92" width="60" height="10" fill="#C8102E" stroke="#1A1410" stroke-width="2"/>
+<path d="M40 97h40" stroke="#F2B705" stroke-width="2.5" stroke-dasharray="4 4"/>
+<path d="M44 70Q60 56 76 70Z" fill="#F2B705" stroke="#1A1410" stroke-width="3" stroke-linejoin="round"/>
+<circle cx="60" cy="58" r="4.5" fill="#C8102E" stroke="#1A1410" stroke-width="2"/>
+<path d="M36 116h48" stroke="#1A1410" stroke-width="2" opacity=".25"/>
+<path d="M112 92H146L142 132H116Z" fill="#FFFFFF" stroke="#1A1410" stroke-width="3" stroke-linejoin="round"/>
+<path d="M113 102H145L142 132H116Z" fill="#5C534C"/>
+<path d="M113 102H145" stroke="#F2B705" stroke-width="2"/>
+<path d="M121 94V130M129 94V131M137 94V130" stroke="#1A1410" stroke-width="1.5" opacity=".28"/>
+<path d="M112 92H146L142 132H116Z" fill="none" stroke="#1A1410" stroke-width="3" stroke-linejoin="round"/>
+<path d="M121 84q-4-5 0-10t0-10M129 82q-4-5 0-10t0-10M137 84q-4-5 0-10t0-10" fill="none" stroke="#1A1410" stroke-width="2" stroke-linecap="round"/>
+</svg>

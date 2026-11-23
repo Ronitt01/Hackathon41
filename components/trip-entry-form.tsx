@@ -5,6 +5,8 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useToast } from "@/components/kafila/toast";
+import { success } from "@/lib/haptics";
 import { ensureSignedIn, errorMessage } from "@/lib/supabase/auth";
 
 type Props = { mode: "create" } | { mode: "join"; code: string };
@@ -12,6 +14,7 @@ type Props = { mode: "create" } | { mode: "join"; code: string };
 /** C-1: create a trip, or join one from an invite link. Signs in as a guest first if needed. */
 export function TripEntryForm(props: Props & { defaultName: string }) {
   const router = useRouter();
+  const toast = useToast();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,6 +31,8 @@ export function TripEntryForm(props: Props & { defaultName: string }) {
           ? await supabase.rpc("create_trip", { p_name: String(form.get("tripName") ?? "").trim(), p_display_name: name })
           : await supabase.rpc("join_trip", { p_code: props.code, p_display_name: name });
       if (error) throw error;
+      success();
+      toast(props.mode === "create" ? "Chalo! Trip created" : "Chalo! You're in", { tone: "success" });
       router.push(`/trips/${tripId}`);
     } catch (err) {
       setError(errorMessage(err));

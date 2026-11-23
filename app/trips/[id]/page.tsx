@@ -19,6 +19,7 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
 
   const active = (members ?? []).filter((m) => m.status !== "dropped");
   const confirmed = active.filter((m) => m.status === "confirmed").length;
+  const allIn = active.length > 1 && confirmed === active.length;
   const openTasks = (tasks ?? []).filter((t) => !t.done);
   const open = openTasks.length;
   // S-1: up to three open tasks on the home, the viewer's own first.
@@ -37,8 +38,12 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
 
   return (
     <>
-      <PaintedBoard note={confirmed < 2 ? "Share the link to bring the gang" : undefined}>
-        {active.length <= 1 ? "Just you so far" : `${confirmed} of ${active.length} in`}
+      {/* Keyed by headcount: a bigger squad all confirming is a new moment; a revisit is not. */}
+      <PaintedBoard
+        note={allIn ? `All ${active.length} confirmed` : confirmed < 2 ? "Share the link to bring the gang" : undefined}
+        celebrate={allIn && `all-in-${trip.id}-${active.length}`}
+      >
+        {active.length <= 1 ? "Just you so far" : allIn ? "Squad's all in" : `${confirmed} of ${active.length} in`}
       </PaintedBoard>
 
       <section aria-labelledby="whos-in" className="grid gap-3">
@@ -79,7 +84,7 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
       <ul className="mt-2 divide-y overflow-hidden rounded-xl border bg-card">
         {links.map(({ href, Icon, title, desc }) => (
           <li key={href}>
-            <Link href={href} className="flex items-center gap-3 px-4 py-3 hover:bg-muted">
+            <Link href={href} className="press flex items-center gap-3 px-4 py-3 hover:bg-muted">
               <span className="grid size-10 shrink-0 place-items-center rounded-full border border-ink">
                 <Icon aria-hidden strokeWidth={1.8} className="size-5" />
               </span>

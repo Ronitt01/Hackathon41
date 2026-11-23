@@ -2,9 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
+import { burst } from "@/components/kafila/confetti";
+import { useToast } from "@/components/kafila/toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { success, tap } from "@/lib/haptics";
 import { createClient } from "@/lib/supabase/client";
 import { errorMessage } from "@/lib/supabase/auth";
 import { SELECT, type CrewMember } from "./roles";
@@ -23,6 +26,9 @@ export function Tasks({ tripId, members, initial }: { tripId: string; members: C
   const [owner, setOwner] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const toast = useToast();
+  const [ticked, setTicked] = useState<string | null>(null); // the box I just ticked pops; boxes done on load don't
+  const doneCount = useRef(0);
   const crew = members.filter((m) => m.status !== "dropped");
 
   useEffect(() => {
@@ -50,7 +56,10 @@ export function Tasks({ tripId, members, initial }: { tripId: string; members: C
     const supabase = createClient();
     const { error } = await action(supabase);
     const { data } = await supabase.from("tasks").select(TASK_COLUMNS).eq("trip_id", tripId).order("created_at");
-    if (data) setTasks(data);
+    if (data) {
+      tasksRef.current = data; // toggle() reads it right after this resolves, before the next render
+      setTasks(data);
+    }
     if (error) setError(errorMessage(error));
     return !error;
   }
@@ -67,6 +76,19 @@ export function Tasks({ tripId, members, initial }: { tripId: string; members: C
     }
   }
 
+  async function toggle(t: Task, checked: boolean) {
+    setTicked(checked ? t.id : null);
+    if (!(await run((s) => s.from("tasks").update({ done: checked }).eq("id", t.id))) || !checked) return;
+    if (tasksRef.current.every((x) => x.done)) {
+      success();
+      burst();
+      return toast("Every task done. Scene set hai!", { tone: "success" });
+    }
+    tap();
+    // Praise the first tick, then every third: often enough to feel seen, rare enough to stay fun.
+    if (doneCount.current++ % 3 === 0) toast("Task done, legend", { tone: "success" });
+  }
+
   const done = tasks.filter((t) => t.done).length;
 
   return (
@@ -80,10 +102,17 @@ export function Tasks({ tripId, members, initial }: { tripId: string; members: C
                   <input
                     type="checkbox"
                     checked={t.done}
-                    onChange={(e) => run((s) => s.from("tasks").update({ done: e.target.checked }).eq("id", t.id))}
-                    className="size-5 shrink-0 cursor-pointer"
+                    onChange={(e) => toggle(t, e.target.checked)}
+                    className={`size-5 shrink-0 cursor-pointer ${t.done && ticked === t.id ? "pop" : ""}`}
                   />
-                  <span className={t.done ? "text-muted-foreground line-through" : "font-semibold"}>{t.title}</span>
+                  {/* The strike is a background line so it can sweep across wrapped lines; forced-colors falls back to line-through. */}
+                  <span
+                    className={`bg-[linear-gradient(currentColor,currentColor)] bg-[position:0_55%] bg-no-repeat motion-safe:transition-[background-size,color] motion-safe:duration-300 motion-safe:ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                      t.done ? "bg-[length:100%_1.5px] text-muted-foreground forced-colors:line-through" : "bg-[length:0%_1.5px] font-semibold"
+                    }`}
+                  >
+                    {t.title}
+                  </span>
                 </label>
                 <Button
                   type="button"

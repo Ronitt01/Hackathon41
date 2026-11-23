@@ -4,8 +4,11 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { ImagePlus, Trash2 } from "lucide-react";
 import { dayLabel } from "@/components/itinerary/days";
+import { useToast } from "@/components/kafila/toast";
 import { shortDate } from "@/components/money/data";
+import { enter } from "@/components/ontrip/enter";
 import { Button } from "@/components/ui/button";
+import { success } from "@/lib/haptics";
 import { istNow, todayDay } from "@/lib/replan";
 import { createClient } from "@/lib/supabase/client";
 import { errorMessage } from "@/lib/supabase/auth";
@@ -25,9 +28,18 @@ function groupLabel(at: string, start: string | null, end: string | null) {
 export function PhotoPool({ tripId, meId, start, end, photos }: { tripId: string; meId: string; start: string | null; end: string | null; photos: TripPhoto[] }) {
   const router = useRouter();
   const input = useRef<HTMLInputElement>(null);
-  const [progress, setProgress] = useState<string | null>(null);
+  const [progress, setProgress] = useState<{ i: number; n: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [confirming, setConfirming] = useState<string | null>(null);
+  const toast = useToast();
+
+  // Photos on screen at load sit still; new ones (mine or the group's, via Realtime) pop in.
+  const known = useRef(new Set(photos.map((p) => p.id)));
+  const popIn = (id: string) => (el: HTMLLIElement | null) => {
+    if (!el || known.current.has(id)) return;
+    known.current.add(id);
+    enter(el, "scale(0.85)");
+  };
 
   const shown = useRef(new Set<string>());
   useEffect(() => {
@@ -55,7 +67,7 @@ export function PhotoPool({ tripId, meId, start, end, photos }: { tripId: string
     const supabase = createClient();
     let failed = 0;
     for (const [i, file] of images.entries()) {
-      setProgress(`Uploading ${i + 1} of ${images.length}…`);
+      setProgress({ i, n: images.length });
       const path = `${tripId}/${crypto.randomUUID()}.${extOf(file)}`;
       const { error: up } = await supabase.storage.from("photos").upload(path, file, { contentType: file.type });
       // shortcut: file date stands in for EXIF capture time (no parser dependency); add EXIF if days look wrong.
@@ -67,6 +79,11 @@ export function PhotoPool({ tripId, meId, start, end, photos }: { tripId: string
     }
     setProgress(null);
     setError(failed ? `${failed} of ${images.length} photos didn't upload. Please try again.` : null);
+    const added = images.length - failed;
+    if (added) {
+      success();
+      toast(`${added === 1 ? "Photo" : `${added} photos`} added to the pool`, { tone: "success" });
+    }
     if (input.current) input.current.value = "";
     router.refresh();
   }
@@ -91,8 +108,25 @@ export function PhotoPool({ tripId, meId, start, end, photos }: { tripId: string
       <input ref={input} type="file" accept="image/*" multiple hidden onChange={(e) => upload(e.target.files)} />
       <Button variant="outline" className="h-11 bg-card" disabled={!!progress} onClick={() => input.current?.click()}>
         <ImagePlus aria-hidden strokeWidth={1.8} className="size-5" />
-        {progress ?? "Add photos"}
+        {progress ? `Uploading ${progress.i + 1} of ${progress.n}…` : "Add photos"}
       </Button>
+      {progress && (
+        <div
+          role="progressbar"
+          aria-label="Photo upload"
+          aria-valuemin={0}
+          aria-valuemax={progress.n}
+          aria-valuenow={progress.i}
+          aria-valuetext={`Uploading ${progress.i + 1} of ${progress.n}`}
+          className="h-1.5 overflow-hidden rounded-full bg-track"
+        >
+          {/* Half credit for the file in flight so the bar moves on a single upload; scaleX keeps it off layout. */}
+          <div
+            className="h-full origin-left bg-ink transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none"
+            style={{ transform: `scaleX(${(progress.i + 0.5) / progress.n})` }}
+          />
+        </div>
+      )}
       {error && <p role="alert" className="text-[13px] text-destructive">{error}</p>}
       {photos.length === 0 ? (
         <p className="rounded-xl border border-dashed px-4 py-6 text-center text-muted-foreground">No photos yet. Add yours and they&apos;ll land under the right day for Trip Wrapped.</p>
@@ -102,7 +136,7 @@ export function PhotoPool({ tripId, meId, start, end, photos }: { tripId: string
             <h3 className="text-[15px] font-bold">{label}</h3>
             <ul className="grid grid-cols-3 gap-1">
               {list.map((p) => (
-                <li key={p.id} className="relative aspect-square overflow-hidden rounded-md bg-track">
+                <li key={p.id} ref={popIn(p.id)} className="relative aspect-square overflow-hidden rounded-md bg-track">
                   <a href={p.url} target="_blank" rel="noopener noreferrer" className="block size-full">
                     {/* eslint-disable-next-line @next/next/no-img-element -- short-lived signed Storage URLs */}
                     <img src={p.url} alt={`Photo by ${p.by}`} loading="lazy" className="size-full object-cover" />

@@ -107,7 +107,7 @@ export function StopForm({
         <div className="flex flex-wrap gap-x-2">
           {TAGS.map((t) => (
             // The 44px label is the tap target; the pill inside is the chip. Checked = the one live colour.
-            <label key={t.id} className="flex h-11 cursor-pointer items-center">
+            <label key={t.id} className="press flex h-11 cursor-pointer items-center">
               <input type="checkbox" name="tags" value={t.id} defaultChecked={initial?.tags.includes(t.id)} className="peer sr-only" />
               <span className="rounded-full border border-ink bg-card px-3 py-0.5 text-[13px] leading-5 font-semibold peer-checked:border-truck-green-ink peer-checked:bg-truck-green-ink peer-checked:text-white peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-truck-green">
                 {t.label}

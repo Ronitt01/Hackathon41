@@ -5,6 +5,8 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useToast } from "@/components/kafila/toast";
+import { tap } from "@/lib/haptics";
 import { suggestedWeekly } from "@/lib/jar";
 import { inr, toPaise } from "@/lib/money";
 import { createClient } from "@/lib/supabase/client";
@@ -29,6 +31,7 @@ export function JarForm({ tripId, meId, saved, weeks, goal, weekly, onDone }: Pr
   const [weeklyText, setWeeklyText] = useState(rupees(weekly));
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const toast = useToast();
 
   const goalPaise = toPaise(goalText);
   const suggestion = goalPaise && weeks ? suggestedWeekly(goalPaise, saved, weeks) : 0;
@@ -45,6 +48,8 @@ export function JarForm({ tripId, meId, saved, weeks, goal, weekly, onDone }: Pr
       .upsert({ member_id: meId, trip_id: tripId, goal_paise: goalPaise, weekly_paise: weeklyPaise }, { onConflict: "member_id" });
     setPending(false);
     if (error) return setError(errorMessage(error));
+    tap();
+    toast(weekly ? "Plan updated." : "Jar's open. Chalo!", { tone: "success" });
     onDone?.();
     router.refresh();
   }

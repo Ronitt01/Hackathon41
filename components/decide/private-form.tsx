@@ -2,10 +2,12 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Lock } from "lucide-react";
+import { Lock, LockOpen } from "lucide-react";
+import { useToast } from "@/components/kafila/toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { success } from "@/lib/haptics";
 import { toPaise } from "@/lib/money";
 import { errorMessage } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/client";
@@ -22,9 +24,12 @@ export function PrivateForm({ tripId, memberId, budgetPaise, prefs }: { tripId: 
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
+  const toast = useToast();
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (saved) return; // already saved and navigating
     const form = new FormData(e.currentTarget);
     const budgetText = String(form.get("budget") ?? "").trim();
     const budget = budgetText ? toPaise(budgetText) : null;
@@ -41,11 +46,14 @@ export function PrivateForm({ tripId, memberId, budgetPaise, prefs }: { tripId: 
         { member_id: memberId, trip_id: tripId, budget_paise: budget, prefs: answers, updated_at: new Date().toISOString() },
         { onConflict: "member_id" },
       );
+    setPending(false);
     if (error) {
       setError(errorMessage(error));
-      setPending(false);
       return;
     }
+    setSaved(true);
+    success();
+    toast("Locked in. Only you can see it.", { tone: "success" });
     router.push(`/trips/${tripId}/decide`);
   }
 
@@ -75,7 +83,7 @@ export function PrivateForm({ tripId, memberId, budgetPaise, prefs }: { tripId: 
                 {CHOICES.map((c) => (
                   <Label
                     key={c.value}
-                    className="h-11 cursor-pointer justify-center border-l border-ink text-center text-[13px] font-semibold first:border-l-0 hover:bg-muted has-checked:bg-truck-green-ink has-checked:text-white has-focus-visible:outline-2 has-focus-visible:-outline-offset-4 has-focus-visible:outline-white"
+                    className="press h-11 cursor-pointer justify-center border-l border-ink text-center text-[13px] font-semibold first:border-l-0 hover:bg-muted has-checked:bg-truck-green-ink has-checked:text-white has-focus-visible:outline-2 has-focus-visible:-outline-offset-4 has-focus-visible:outline-white"
                   >
                     <input type="radio" name={t.id} value={c.value} defaultChecked={(prefs[t.id] ?? 0) === c.value} className="sr-only" />
                     {c.label}
@@ -87,8 +95,9 @@ export function PrivateForm({ tripId, memberId, budgetPaise, prefs }: { tripId: 
         </div>
       </div>
       <Button type="submit" disabled={pending}>
-        <Lock aria-hidden className="size-[18px]" strokeWidth={1.8} />
-        {pending ? "Saving…" : "Save privately"}
+        {/* The padlock clicks shut (one .pop) when the save lands. */}
+        {saved ? <Lock aria-hidden className="pop size-[18px]" strokeWidth={1.8} /> : <LockOpen aria-hidden className="size-[18px]" strokeWidth={1.8} />}
+        {pending ? "Saving…" : saved ? "Locked in" : "Save privately"}
       </Button>
       {error && <p role="alert" className="text-[15px] text-destructive">{error}</p>}
     </form>
