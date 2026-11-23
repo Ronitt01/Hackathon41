@@ -107,7 +107,7 @@ export function DemoApp() {
                 )}
               </div>
             ))}
-            <p className="text-xs text-muted-foreground">The pledge counts toward your share, so it's not an extra cost. (Payment mocked.)</p>
+            <p className="text-xs text-muted-foreground">The pledge counts toward your share, so it&apos;s not an extra cost. (Payment mocked.)</p>
             <InviteButton code="demo" tripName="Goa with friends" />
           </Section>
 
