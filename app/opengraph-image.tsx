@@ -77,7 +77,7 @@ export default async function OpengraphImage() {
                   <div key={k} style={{ width: 13, height: "100%", background: k % 2 ? "#FFFFFF" : RED }} />
                 ))}
               </div>
-              <div style={{ width: 56, fontSize: 22, fontWeight: 600, textAlign: "right" }}>{s}%</div>
+              <div style={{ width: 56, fontSize: 22, fontWeight: 600, textAlign: "right" }}>{`${s}%`}</div>
             </div>
           ))}
         </div>
