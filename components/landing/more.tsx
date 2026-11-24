@@ -1,77 +1,87 @@
 import Image from "next/image";
-import { CircleAlert, Eye, Lock } from "lucide-react";
+import Link from "next/link";
+import { CircleAlert, CircleCheck, Eye, Lock } from "lucide-react";
+import { ReflectorBar } from "@/components/kafila/reflector-bar";
 import { cn } from "@/lib/utils";
 import {
+  BTN_PRIMARY,
   CARD,
+  CARD_TEXT,
   CARD_TITLE,
   H2,
   INTRO,
+  NAV_LINK,
   ONE_SCREEN,
   SECTION,
   WRAP,
   photo,
 } from "./kit";
 
-const MINE = [
-  "Your budget",
-  "What you've saved in the Trip Jar",
-  "How well a plan fits you",
-  "Your vetoes, unless you sign them",
-  "Your mood check-ins",
-];
-const GROUP = [
-  "Whether a plan fits everyone's budget",
-  "The group fit score of each option",
-  "The group minimum on the fairness meter",
-  "How many friends asked for a break",
+const OPTIONS = [
+  { name: "Palolem beach huts", price: "₹3,200 per head" },
+  { name: "Assagao homestay", price: "₹4,500 per head" },
 ];
 
-/** Privacy: two columns, what only you see and what the group sees, each with the screen that shows it. */
+/** Privacy: what only you see and what the group sees, each shown as the screen that shows it. */
 export function PrivacySection() {
   const villa = photo("villa");
   return (
     <section
       id="privacy"
       aria-labelledby="privacy-h"
-      className={cn(SECTION, ONE_SCREEN)}
+      className={cn(SECTION, "min-h-[200svh] lg:min-h-svh")}
     >
-      <div className={WRAP}>
+      <div className={cn(WRAP, "flex flex-1 flex-col")}>
         <h2 id="privacy-h" className={H2}>
           What stays private, and what the group sees
         </h2>
         <p className={INTRO}>
-          Budgets are locked in the database, not only hidden on screen. The
-          group gets what it needs to decide, and nothing that points to one
-          person.
+          Budgets are locked in the database, not only hidden on screen.
         </p>
-        <div className="mt-10 grid gap-6 lg:grid-cols-2">
+        {/* Phone: the group card takes its content's height and the only-you panel spreads over the rest of the two screens. */}
+        <div className="mt-10 grid flex-1 grid-rows-[1fr_auto] gap-6 lg:grid-cols-2 lg:grid-rows-1">
           <article className={cn(CARD, "flex flex-col p-6 xl:p-8")}>
             <h3 className={cn(CARD_TITLE, "flex items-center gap-2")}>
               <Lock aria-hidden strokeWidth={1.8} className="size-5" />
               Only you see
             </h3>
-            <ul className="mt-3 grid gap-1.5 text-[16px]">
-              {MINE.map((m) => (
-                <li key={m}>{m}</li>
-              ))}
-            </ul>
+            <p className={CARD_TEXT}>
+              Your budget, your savings and how well a plan fits you.
+            </p>
             <div
               role="img"
-              aria-label="Your budget field showing ₹12,000, marked only you can see this."
-              className="mt-auto grid gap-1.5 pt-6"
+              aria-label="Your private panel: budget ₹12,000, Trip Jar ₹4,050 saved of ₹12,000, and the villa fits you 58 out of 100. Only you can see this."
+              className="mt-6 flex flex-1 flex-col justify-between gap-5 rounded-xl bg-wash p-4 md:p-5"
             >
-              <span className="text-[15px] font-semibold">
-                Your budget for this trip
+              <span className="grid gap-1.5">
+                <span className="text-[15px] font-semibold">
+                  Your budget for this trip
+                </span>
+                <span className="flex h-11 items-center justify-between rounded-lg border border-input bg-card px-3 text-[17px] font-bold">
+                  <span className="tabular">₹12,000</span>
+                  <Lock aria-hidden strokeWidth={1.8} className="size-4" />
+                </span>
               </span>
-              <span className="flex h-11 items-center justify-between rounded-lg border border-input bg-card px-2.5 text-[16px]">
-                <span className="tabular">₹12,000</span>
-                <Lock
-                  aria-hidden
-                  strokeWidth={1.8}
-                  className="size-4 text-muted-foreground"
+              <span className="grid gap-1.5">
+                <span className="flex justify-between gap-3 text-[15px]">
+                  <span className="font-semibold">Your Trip Jar</span>
+                  <span className="tabular">₹4,050 of ₹12,000</span>
+                </span>
+                <ReflectorBar value={34} label="Trip Jar 34% saved" />
+              </span>
+              <span className="grid gap-1.5">
+                <span className="flex justify-between gap-3 text-[15px]">
+                  <span className="font-semibold">Villa fits you</span>
+                  <span className="tabular">58</span>
+                </span>
+                <ReflectorBar
+                  value={58}
+                  index={1}
+                  label="Villa fits you 58 out of 100"
                 />
               </span>
-              <span className="text-[13px] text-muted-foreground">
+              <span className="flex items-center gap-1.5 text-[15px] text-muted-foreground">
+                <Lock aria-hidden strokeWidth={1.8} className="size-4" />
                 Only you can see this.
               </span>
             </div>
@@ -82,41 +92,65 @@ export function PrivacySection() {
               <Eye aria-hidden strokeWidth={1.8} className="size-5" />
               The group sees
             </h3>
-            <ul className="mt-3 mb-6 grid gap-1.5 text-[16px]">
-              {GROUP.map((g) => (
-                <li key={g}>{g}</li>
-              ))}
-            </ul>
-            <div
-              role="img"
-              aria-label="An option, Candolim villa with a pool at ₹7,000 per head, marked Over someone's budget without saying whose."
-              className="mt-auto flex items-center gap-3 rounded-xl border bg-wash p-3"
-            >
-              <Image
-                src={villa.file}
-                alt=""
-                width={112}
-                height={112}
-                sizes="56px"
-                className="size-14 shrink-0 rounded-lg object-cover"
-              />
-              <span className="min-w-0 leading-snug">
-                <span className="block text-[15px] font-semibold">
+            <p className={CARD_TEXT}>
+              Whether a plan fits everyone, never whose budget it breaks.
+            </p>
+            <div className="mt-6 flex flex-col overflow-hidden rounded-xl bg-wash lg:flex-1">
+              <div
+                role="img"
+                aria-label="An option, Candolim villa with a pool at ₹7,000 per head, marked Over someone's budget without saying whose."
+                className="flex flex-col lg:flex-1"
+              >
+              {/* Phones keep the photo's 4:3 so it isn't upscaled; desktop lets it fill the card's leftover height. */}
+              <span className="relative aspect-[4/3] lg:aspect-auto lg:min-h-28 lg:flex-1">
+                <Image
+                  src={villa.file}
+                  alt=""
+                  fill
+                  sizes="(min-width: 1024px) 540px, 100vw"
+                  className="object-cover"
+                />
+              </span>
+              <span className="grid gap-1 p-4 md:p-5">
+                <span className="text-[17px] leading-snug font-bold">
                   Candolim villa with a pool
                 </span>
-                <span className="tabular block text-[13px] text-muted-foreground">
-                  ₹7,000 per head
-                </span>
-                <span className="mt-0.5 flex items-center gap-1 text-[13px] font-semibold text-truck-red">
+                <span className="tabular text-[15px]">₹7,000 per head</span>
+                <span className="mt-1 flex items-center gap-1.5 text-[15px] font-semibold text-truck-red">
                   <CircleAlert
                     aria-hidden
                     strokeWidth={1.8}
-                    className="size-4"
+                    className="size-[18px]"
                   />
                   Over someone&apos;s budget
                 </span>
               </span>
+              </div>
+              {/* Phones have the second screen's room for the rest of the group's list. */}
+              <ul className="lg:hidden">
+                {OPTIONS.map((o) => (
+                  <li key={o.name} className="grid gap-1 border-t p-4 md:p-5">
+                    <span className="text-[17px] leading-snug font-bold">
+                      {o.name}
+                    </span>
+                    <span className="tabular text-[15px]">{o.price}</span>
+                    <span className="mt-1 flex items-center gap-1.5 text-[15px] font-semibold text-truck-green-ink">
+                      <CircleCheck
+                        aria-hidden
+                        strokeWidth={1.8}
+                        className="size-[18px]"
+                      />
+                      Fits everyone
+                    </span>
+                  </li>
+                ))}
+              </ul>
             </div>
+            <p className="mt-auto pt-3">
+              <a href="#how" className={NAV_LINK}>
+                How Kafila finds a fair plan
+              </a>
+            </p>
           </article>
         </div>
       </div>
@@ -148,24 +182,26 @@ const STORIES = [
   },
 ];
 
-/** Wrapped: three story cards in a row. Each card is a painted board, so Bungee is allowed on it. */
+/** Wrapped: story cards in a row (two below lg). Each card is a painted board, so Bungee is allowed on it. */
 export function WrappedSection() {
   return (
     <section
       id="wrapped"
       aria-labelledby="wrapped-h"
-      className={cn(SECTION, ONE_SCREEN)}
+      className={cn(SECTION, "min-h-[200svh] lg:min-h-svh lg:pb-[72px]")}
     >
-      <div className={WRAP}>
+      <div className={cn(WRAP, "flex flex-1 flex-col")}>
         <h2 id="wrapped-h" className={H2}>
           A trip recap your group will want to post
         </h2>
         <p className={INTRO}>
           Back home, Kafila turns the trip into story cards: the most loved
-          place, the priciest meal, who planned the most. Save one as an image
-          or share it.
+          place, who planned the most. Save one or share it.
         </p>
-        <ul className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <Link href="/start" className={cn(BTN_PRIMARY, "mt-6 self-start")}>
+          Start a trip
+        </Link>
+        <ul className="mt-10 grid flex-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {STORIES.map((c, i) => {
             const p = photo(c.subject);
             return (
@@ -173,7 +209,7 @@ export function WrappedSection() {
                 key={c.label}
                 className={cn(
                   "chevron-band rounded-md p-2.5",
-                  i === 2 && "sm:max-lg:hidden",
+                  i === 2 && "max-lg:hidden",
                 )}
               >
                 <div
@@ -184,15 +220,16 @@ export function WrappedSection() {
                     c.paint,
                   )}
                 >
+                  {/* The photo grows to fill the card, so the cards reach the section's bottom padding. */}
                   <Image
                     src={p.file}
                     alt=""
                     width={p.width}
                     height={p.height}
-                    sizes="(min-width: 1024px) 380px, (min-width: 640px) 50vw, 100vw"
-                    className="aspect-[16/10] w-full border-b-2 border-ink object-cover"
+                    sizes="(min-width: 1024px) 480px, (min-width: 640px) 50vw, 100vw"
+                    className="aspect-[16/10] min-h-0 w-full flex-auto object-cover lg:aspect-[16/9]"
                   />
-                  <div className="grid flex-1 content-start gap-1.5 p-5">
+                  <div className="grid gap-1.5 p-5">
                     <p className="font-display text-[26px] leading-[1.05] uppercase xl:text-[30px]">
                       {c.big}
                     </p>
@@ -214,32 +251,24 @@ export function WrappedSection() {
 
 const FAQ = [
   {
-    q: "Isn't this just a trip planner with a bill splitter?",
-    a: "Those apps book things and split bills afterwards. Kafila also handles the people: private budgets, a fair plan, saving before the trip and splits by item during it.",
+    q: "Isn't this just a bill splitter?",
+    a: "It also keeps budgets private and picks a plan that fits everyone.",
   },
   {
-    q: "How does Kafila decide what's fair?",
-    a: "Every private budget is a hard limit. Among the plans that fit, it picks the one where the least happy friend scores highest, so the quietest person counts as much as the loudest.",
-  },
-  {
-    q: "Can someone work out who has the lowest budget?",
-    a: "The group never receives anyone's budget, only whether a plan fits. In a group of two, Kafila warns you that yours could be guessed.",
+    q: "Can someone guess the lowest budget?",
+    a: "The group never sees a budget, only if a plan fits. Pairs get a warning.",
   },
   {
     q: "Does Kafila hold our money?",
-    a: "No. Payments open your own UPI app. Trip Jar auto-save is a preview for now, and no real money is ever held.",
+    a: "No. Payments open your own UPI app.",
   },
   {
-    q: "Why not plan in the group chat?",
-    a: "Keep the chat. Paste it into Kafila and it turns the messages into options the group can vote on.",
-  },
-  {
-    q: "Do my friends need to install an app?",
-    a: "No. They open the invite link in a browser and join as a guest with just a name, or with Google.",
+    q: "Do my friends need the app?",
+    a: "No. They open the invite link and join as a guest.",
   },
 ];
 
-/** FAQ: the heading on the left, every answer open on the right (native details, so a reader can fold them). */
+/** FAQ: the heading and the invite screen on the left, the answers on the right (on the page's k=6 split line). */
 export function FaqSection() {
   return (
     <section
@@ -247,30 +276,60 @@ export function FaqSection() {
       aria-labelledby="faq-h"
       className={cn(SECTION, ONE_SCREEN)}
     >
-      <div className={cn(WRAP, "grid gap-8 lg:grid-cols-12 lg:gap-x-6")}>
-        <div className="lg:col-span-4">
-          <h2 id="faq-h" className={H2}>
-            Questions about Kafila
-          </h2>
-        </div>
-        <div className="border-t lg:col-span-7 lg:col-start-6">
+      <div
+        className={cn(
+          WRAP,
+          "grid flex-1 grid-rows-[auto_auto_1fr] gap-y-8 lg:grid-cols-12 lg:grid-rows-[auto_1fr] lg:gap-x-6",
+        )}
+      >
+        <h2 id="faq-h" className={cn(H2, "lg:col-span-6")}>
+          Questions about Kafila
+        </h2>
+        <dl className="grid content-start gap-6 lg:col-span-6 lg:col-start-7 lg:row-span-2 lg:row-start-1 lg:gap-10">
           {FAQ.map((f) => (
-            <details key={f.q} open className="group border-b py-4">
-              <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-4 text-[18px] leading-snug font-bold [&::-webkit-details-marker]:hidden">
-                {f.q}
-                <span
-                  aria-hidden
-                  className="grid size-6 shrink-0 place-items-center text-[20px] font-medium text-muted-foreground"
-                >
-                  <span className="group-open:hidden">+</span>
-                  <span className="hidden group-open:inline">−</span>
-                </span>
-              </summary>
-              <p className="mt-1 max-w-[62ch] text-[16px] leading-[1.55]">
+            <div key={f.q}>
+              <dt className="text-[18px] leading-snug font-bold">{f.q}</dt>
+              <dd className="mt-1 max-w-[62ch] text-[16px] leading-[1.5]">
                 {f.a}
-              </p>
-            </details>
+              </dd>
+            </div>
           ))}
+        </dl>
+        {/* The real invite screen, as a friend sees it: no install, just a name. */}
+        <div
+          role="img"
+          aria-label="Kafila's invite page in a browser: You're invited, a Your name field filled in with Riya, and a Join trip button."
+          className={cn(
+            CARD,
+            "grid w-full max-w-[420px] gap-3 self-end p-4 lg:col-span-5 lg:row-start-2 lg:max-w-[480px] lg:gap-4 lg:p-6",
+          )}
+        >
+          <span className="flex items-center gap-3">
+            <Image
+              src="/illustrations/chai.svg"
+              alt=""
+              width={160}
+              height={160}
+              className="size-14 shrink-0 lg:size-20"
+            />
+            <span className="grid gap-0.5">
+              <span className="text-[20px] leading-tight font-bold">
+                You&apos;re invited
+              </span>
+              <span className="text-[15px] text-muted-foreground">
+                Your friends saved you a seat.
+              </span>
+            </span>
+          </span>
+          <span className="grid gap-1.5">
+            <span className="text-[15px] font-semibold">Your name</span>
+            <span className="flex h-11 items-center rounded-lg border border-input bg-card px-3 text-[16px]">
+              Riya
+            </span>
+          </span>
+          <span className="flex h-11 items-center justify-center rounded-lg bg-ink text-[15px] font-semibold text-wash">
+            Join trip
+          </span>
         </div>
       </div>
     </section>

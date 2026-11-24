@@ -1,6 +1,7 @@
 import Image from "next/image";
 import {
-  Ban,
+  ArrowRight,
+  Check,
   CircleCheck,
   CloudRain,
   Flower2,
@@ -24,8 +25,6 @@ import {
 } from "./kit";
 
 /* Mock controls: they look like the app's, but on this page they are part of a picture, not buttons. */
-const CHIP =
-  "inline-flex items-center rounded-full border border-ink bg-card px-2.5 text-[13px] leading-6 font-semibold";
 const ON =
   "inline-flex h-11 items-center justify-center gap-1.5 rounded-full border border-truck-green-ink bg-truck-green-ink px-3.5 text-[15px] font-semibold text-white";
 const OFF =
@@ -44,60 +43,41 @@ export function DecideSection() {
       aria-labelledby="decide-h"
       className={cn(SECTION, ONE_SCREEN)}
     >
-      <div className={cn(WRAP, "grid gap-10 lg:grid-cols-12 lg:gap-x-6")}>
+      <div
+        className={cn(
+          WRAP,
+          "flex flex-1 flex-col gap-8 lg:grid lg:grid-cols-12 lg:gap-x-6",
+        )}
+      >
         <div className="lg:col-span-5">
           <h2 id="decide-h" className={H2}>
             Vote on the parts of a plan you like
           </h2>
           <p className={INTRO}>
-            Friends add stays, food and days out. Everyone hearts the parts they
-            like, and Kafila turns the likes into a group fit score that is
-            never shown per person.
+            Heart the parts you like, give one Rose, use one veto. Kafila turns
+            it into a group fit score, never shown per person.
           </p>
-          <ul className="mt-8 grid gap-4 text-[16px]">
-            <li className="flex gap-3">
-              <Heart
-                aria-hidden
-                strokeWidth={1.8}
-                className="mt-0.5 size-5 shrink-0 text-ink"
-              />
-              Like the pool and skip the price, part by part.
-            </li>
-            <li className="flex gap-3">
-              <Flower2
-                aria-hidden
-                strokeWidth={1.8}
-                className="mt-0.5 size-5 shrink-0 text-ink"
-              />
-              One Rose each, for the option you want most.
-            </li>
-            <li className="flex gap-3">
-              <Ban
-                aria-hidden
-                strokeWidth={1.8}
-                className="mt-0.5 size-5 shrink-0 text-ink"
-              />
-              One veto each, with or without your name.
-            </li>
-          </ul>
         </div>
 
         <article
           role="img"
           aria-label="An option card in Decide: Beach shack dinner, ₹700 per head, group fit 82, fits everyone's budget, with liked parts and your Rose on it."
-          className={cn(CARD, "overflow-hidden lg:col-span-6 lg:col-start-7")}
+          className={cn(
+            CARD,
+            "flex flex-1 flex-col overflow-hidden lg:col-span-6 lg:col-start-7",
+          )}
         >
+          {/* The photo takes whatever height is left, so the card reaches the section's bottom padding. */}
           <Image
             src={p.file}
             alt=""
             width={p.width}
             height={p.height}
             sizes="(min-width: 1024px) 600px, 100vw"
-            className="h-44 w-full object-cover xl:h-52"
+            className="h-32 w-full flex-auto object-cover"
           />
           <div className="grid gap-3 p-4 md:p-5">
-            <div className="grid gap-1.5">
-              <span className={cn(CHIP, "justify-self-start")}>Food</span>
+            <div className="grid gap-1">
               <p className="text-[17px] leading-snug font-bold">
                 Beach shack dinner
               </p>
@@ -118,7 +98,7 @@ export function DecideSection() {
               />
               Fits everyone&apos;s budget
             </p>
-            <ul className="divide-y border-y">
+            <ul className="divide-y">
               <li className="flex items-center justify-between gap-3 py-1.5">
                 <span className="text-[15px]">
                   <span className="font-semibold">Sunset table</span>
@@ -190,36 +170,37 @@ const ITEMS = [
 
 /** Money: two cards side by side, the settle-up list wider than the item split. */
 export function MoneySection() {
-  const p = photo("thali");
   return (
     <section
       id="money"
       aria-labelledby="money-h"
       className={cn(SECTION, ONE_SCREEN)}
     >
-      <div className={WRAP}>
+      <div className={cn(WRAP, "flex flex-1 flex-col")}>
         <h2 id="money-h" className={H2}>
-          Settle up in the fewest payments
+          Split by item, settle up on UPI
         </h2>
         <p className={INTRO}>
-          Split a bill by who ate what. Kafila works out the fewest payments to
-          square everyone up, and each one opens your UPI app with the amount
-          filled in.
+          Kafila finds the fewest payments, and each one opens your UPI app.
         </p>
-        <div className="mt-10 grid gap-6 lg:grid-cols-12">
-          <article className={cn(CARD, "p-6 lg:col-span-7 xl:p-8")}>
-            <h3 className={CARD_TITLE}>Pay in one tap</h3>
-            <p className={CARD_TEXT}>
-              Three payments square up six friends after four days of shared
-              bills.
-            </p>
+        <div className="mt-6 grid gap-3 sm:mt-8 sm:gap-4 lg:mt-10 lg:grid-cols-12 lg:gap-6">
+          <article
+            className={cn(
+              CARD,
+              "flex flex-col p-4 sm:p-5 md:p-6 lg:col-span-6 xl:p-8",
+            )}
+          >
+            <h3 className={CARD_TITLE}>UPI settle-up</h3>
             <div
               role="img"
               aria-label="Settle up: Rohan pays Aarav ₹1,240, you pay Sana ₹860 with a Pay with UPI button, Kabir pays Aarav ₹410."
-              className="mt-6 divide-y rounded-xl border bg-wash px-4"
+              className="mt-4 divide-y rounded-xl border bg-wash px-4"
             >
               {PAYMENTS.map((t) => (
-                <div key={t.from} className="grid gap-3 py-3">
+                <div
+                  key={t.from}
+                  className="grid gap-2.5 py-2.5"
+                >
                   <p className="flex items-baseline justify-between gap-3 text-[15px]">
                     <span>
                       <span className="font-semibold">{t.from}</span>{" "}
@@ -230,13 +211,16 @@ export function MoneySection() {
                   </p>
                   {t.mine && (
                     <span className="grid grid-cols-2 gap-2">
-                      <span className={INK_BTN}>
+                      <span className={cn(INK_BTN, "max-sm:px-3")}>
                         <Smartphone
                           aria-hidden
                           strokeWidth={1.8}
-                          className="size-[18px]"
+                          className="size-[18px] max-sm:hidden"
                         />
-                        Pay {t.amount} with UPI
+                        <span className="sm:hidden">Pay with UPI</span>
+                        <span className="max-sm:hidden">
+                          Pay {t.amount} with UPI
+                        </span>
                       </span>
                       <span className={OUTLINE_BTN}>Mark as paid</span>
                     </span>
@@ -244,45 +228,63 @@ export function MoneySection() {
                 </div>
               ))}
             </div>
+            {/* The foot of the real settle-up screen: payments already made. */}
+            <div
+              role="img"
+              aria-label="Recent payments: Meera paid Aarav ₹1,500 on 22 Nov."
+              className="grid gap-1 pt-6 max-sm:hidden"
+            >
+              <p className="text-[15px] font-bold">Recent payments</p>
+              <p className="flex items-center justify-between gap-3 border-t py-2 text-[15px]">
+                <span className="flex items-center gap-1.5">
+                  Meera
+                  <ArrowRight
+                    aria-hidden
+                    strokeWidth={1.8}
+                    className="size-4 text-muted-foreground"
+                  />
+                  Aarav
+                </span>
+                <span className="tabular text-[13px] text-muted-foreground">
+                  ₹1,500 · 22 Nov
+                </span>
+              </p>
+            </div>
           </article>
 
-          <article className={cn(CARD, "overflow-hidden lg:col-span-5")}>
-            <Image
-              src={p.file}
-              alt=""
-              width={p.width}
-              height={p.height}
-              sizes="(min-width: 1024px) 480px, 100vw"
-              className="h-32 w-full object-cover xl:h-36"
-            />
-            <div className="p-6 xl:px-8">
-              <h3 className={CARD_TITLE}>Split by item</h3>
-              <p className={CARD_TEXT}>
-                Everyone ticks what they had. Tax is shared the same way.
-              </p>
-              <div
-                role="img"
-                aria-label="Goan thali lunch split by item: two fish thalis for you and Rohan, three veg thalis for Meera, Sana and Kabir, four kokum sodas shared by four."
-                className="mt-4 divide-y border-y"
-              >
-                {ITEMS.map((it) => (
-                  <div
-                    key={it.name}
-                    className="flex items-center justify-between gap-3 py-2"
-                  >
-                    <span className="min-w-0">
-                      <span className="block text-[15px] font-semibold">
-                        {it.name}
-                      </span>
-                      <span className="tabular block text-[13px] text-muted-foreground">
-                        {it.amount}
-                      </span>
+          <article
+            className={cn(
+              CARD,
+              "flex flex-col p-4 sm:p-5 md:p-6 lg:col-span-6 xl:p-8",
+            )}
+          >
+            <h3 className={CARD_TITLE}>Item split</h3>
+            <div
+              role="img"
+              aria-label="Goan thali lunch split by item: two fish thalis for you and Rohan, three veg thalis for Meera, Sana and Kabir, four kokum sodas shared by four."
+              className="mt-4 divide-y"
+            >
+              {ITEMS.map((it) => (
+                <div
+                  key={it.name}
+                  className="flex items-center justify-between gap-3 py-3"
+                >
+                  <span className="min-w-0">
+                    <span className="block text-[15px] font-semibold">
+                      {it.name}
                     </span>
-                    <StickerStack names={it.who} size="sm" />
-                  </div>
-                ))}
-              </div>
+                    <span className="tabular block text-[13px] text-muted-foreground">
+                      {it.amount}
+                    </span>
+                  </span>
+                  <StickerStack names={it.who} size="sm" />
+                </div>
+              ))}
             </div>
+            <p className="mt-auto flex items-center gap-1.5 pt-6 text-[15px] font-semibold text-truck-green-ink max-sm:hidden">
+              <Check aria-hidden strokeWidth={1.8} className="size-[18px]" />
+              <span className="tabular">All ₹1,630 assigned</span>
+            </p>
           </article>
         </div>
       </div>
@@ -290,9 +292,15 @@ export function MoneySection() {
   );
 }
 
+const DEPOSITS = [
+  { date: "18 Nov", amount: "₹1,000" },
+  { date: "11 Nov", amount: "₹1,000" },
+  { date: "4 Nov", amount: "₹900" },
+];
+
 const LEVELS = ["Wiped", "Low", "Okay", "Good", "Great"];
 
-/** Trip Jar and the on-trip tools: a bento, the Jar tall on the left, two tools stacked on the right. */
+/** Trip Jar and the on-trip tools: a split, the Jar standing on the ground left, one card of trip tools right. */
 export function TripSection() {
   return (
     <section
@@ -300,111 +308,123 @@ export function TripSection() {
       aria-labelledby="trip-h"
       className={cn(SECTION, ONE_SCREEN)}
     >
-      <div className={WRAP}>
+      <div className={cn(WRAP, "flex flex-1 flex-col")}>
         <h2 id="trip-h" className={H2}>
           Save before the trip, re-plan during it
         </h2>
         <p className={INTRO}>
-          A private Trip Jar for your share, then a daily mood check and a rain
-          plan once you&apos;re there.
+          A private jar for your share, then a mood check and a rain plan on the
+          trip.
         </p>
-        <div className="mt-10 grid gap-6 lg:grid-cols-12 lg:grid-rows-2">
-          <article
-            className={cn(
-              CARD,
-              "flex flex-col p-6 lg:col-span-5 lg:row-span-2 xl:p-8",
-            )}
-          >
-            <h3 className={CARD_TITLE}>Trip Jar</h3>
-            <p className={CARD_TEXT}>
-              Put a little aside each week toward your share. Only you see what
-              you&apos;ve saved.
-            </p>
+        <div className="mt-6 grid gap-3 sm:mt-8 sm:gap-4 lg:mt-10 lg:grid-cols-12 lg:gap-6">
+          {/* No card here: the painted board is the box, so it stands on the ground. */}
+          <article className="flex flex-col lg:col-span-5 lg:pb-2">
+            <PaintedBoard
+              note="Your share is ₹6,850"
+              className="self-start [&>div]:text-left"
+            >
+              ₹3,950 to go
+            </PaintedBoard>
+            <h3 className={cn(CARD_TITLE, "mt-4")}>Trip Jar</h3>
+            <p className={CARD_TEXT}>Only you see what you&apos;ve saved.</p>
             <div
               role="img"
-              aria-label="Your Trip Jar: ₹3,950 to go, ₹2,900 of ₹6,850 saved."
-              className="mt-auto grid gap-4 pt-6"
+              aria-label="Your Trip Jar: ₹2,900 of ₹6,850 saved, 42%. Last deposits: ₹1,000 on 18 Nov, ₹1,000 on 11 Nov, ₹900 on 4 Nov."
+              className="mt-4 grid gap-2 lg:mt-6"
             >
-              <PaintedBoard note="Your share is ₹6,850">
-                ₹3,950 to go
-              </PaintedBoard>
-              <div className="grid grid-cols-[1fr_auto] items-center gap-3">
-                <ReflectorBar value={42} label="Saved 42%" />
-                <span className="tabular text-[13px] font-semibold">
-                  ₹2,900 saved
+              <p className="flex items-baseline justify-between gap-3">
+                <span className="tabular">
+                  <span className="text-[22px] leading-none font-bold">
+                    ₹2,900
+                  </span>
+                  <span className="text-muted-foreground"> of ₹6,850</span>
+                </span>
+                <span className="tabular text-[15px] font-semibold">42%</span>
+              </p>
+              <ReflectorBar value={42} label="Saved 42%" />
+              <ul className="mt-2 divide-y max-sm:hidden">
+                {DEPOSITS.map((d) => (
+                  <li
+                    key={d.date}
+                    className="flex justify-between py-2.5 text-[15px]"
+                  >
+                    <span className="text-muted-foreground">{d.date}</span>
+                    <span className="tabular font-semibold">{d.amount}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </article>
+
+          <div className="grid gap-4 lg:col-span-6 lg:col-start-7 lg:grid-rows-2 lg:gap-6">
+            <article className={cn(CARD, "flex flex-col p-4 md:p-6 xl:p-8")}>
+              <h3 className={CARD_TITLE}>Mood pulse check-in</h3>
+              <p className={cn(CARD_TEXT, "hidden lg:block")}>
+                The group sees the average, never your answer.
+              </p>
+              <div
+                role="img"
+                aria-label="Energy check-in from 1 to 5 with Good picked, and the group line: mostly good, one friend needs a break."
+                className="mt-3 grid gap-2 lg:mt-auto lg:pt-4"
+              >
+                <span className="grid grid-cols-5 gap-1.5">
+                  {LEVELS.map((w, i) => (
+                    <span
+                      key={w}
+                      className={cn(
+                        "grid min-h-12 place-items-center rounded-xl border py-1 leading-tight",
+                        i === 3
+                          ? "border-truck-green-ink bg-truck-green-ink text-white"
+                          : "border-input bg-card",
+                      )}
+                    >
+                      <span className="tabular text-[16px] font-bold">
+                        {i + 1}
+                      </span>
+                      <span className="text-[13px] font-semibold">{w}</span>
+                    </span>
+                  ))}
+                </span>
+                <span className="text-[13px] text-muted-foreground max-sm:hidden">
+                  Group today: mostly good. 1 friend needs a break.
                 </span>
               </div>
-            </div>
-          </article>
+            </article>
 
-          <article className={cn(CARD, "p-6 lg:col-span-7 xl:px-8")}>
-            <h3 className={CARD_TITLE}>Mood pulse</h3>
-            <p className={CARD_TEXT}>
-              Rate your energy each morning. The group sees the average, never
-              your answer.
-            </p>
-            <div
-              role="img"
-              aria-label="Energy check-in from 1 to 5 with Good picked, and the group line: mostly good, one friend needs a break."
-              className="mt-4 grid gap-2"
-            >
-              <span className="grid grid-cols-5 gap-1.5">
-                {LEVELS.map((w, i) => (
-                  <span
-                    key={w}
-                    className={cn(
-                      "grid min-h-12 place-items-center rounded-xl border py-1 leading-tight",
-                      i === 3
-                        ? "border-truck-green-ink bg-truck-green-ink text-white"
-                        : "border-input bg-card",
-                    )}
-                  >
-                    <span className="tabular text-[16px] font-bold">
-                      {i + 1}
-                    </span>
-                    <span className="text-[13px] font-semibold">{w}</span>
+            <article className={cn(CARD, "flex flex-col p-4 md:p-6 xl:p-8")}>
+              <h3 className={CARD_TITLE}>Rain re-plan</h3>
+              <p className={cn(CARD_TEXT, "hidden lg:block")}>
+                Rain at 3 pm? Kafila proposes the rest of the day indoors.
+              </p>
+              <div
+                role="img"
+                aria-label="Rain re-plan for 3 pm: Palolem kayaks swapped for the Old Goa churches walk."
+                className="mt-3 grid grid-cols-[1fr_auto_1fr] items-center gap-3 rounded-xl border bg-wash p-3 lg:mt-auto"
+              >
+                <span className="min-w-0 leading-snug">
+                  <span className="tabular block text-[13px] font-semibold text-muted-foreground">
+                    15:00 · Now
                   </span>
-                ))}
-              </span>
-              <span className="text-[13px] text-muted-foreground">
-                Group today: mostly good. 1 friend needs a break.
-              </span>
-            </div>
-          </article>
-
-          <article className={cn(CARD, "p-6 lg:col-span-7 xl:px-8")}>
-            <h3 className={CARD_TITLE}>Rain plan</h3>
-            <p className={CARD_TEXT}>
-              Rain at 3 pm? Kafila proposes the rest of the day indoors.
-            </p>
-            <div
-              role="img"
-              aria-label="Rain re-plan for 3 pm: Palolem kayaks swapped for the Old Goa churches walk."
-              className="mt-4 grid grid-cols-[1fr_auto_1fr] items-center gap-3 rounded-xl border bg-wash p-3"
-            >
-              <span className="min-w-0 leading-snug">
-                <span className="tabular block text-[13px] font-semibold text-muted-foreground">
-                  15:00 · Now
+                  <span className="block text-[15px] font-semibold line-through decoration-truck-red">
+                    Palolem kayaks
+                  </span>
                 </span>
-                <span className="block text-[15px] font-semibold line-through decoration-truck-red">
-                  Palolem kayaks
+                <CloudRain
+                  aria-hidden
+                  strokeWidth={1.8}
+                  className="size-5 text-muted-foreground"
+                />
+                <span className="min-w-0 leading-snug">
+                  <span className="tabular block text-[13px] font-semibold text-truck-green-ink">
+                    15:00 · New
+                  </span>
+                  <span className="block text-[15px] font-semibold">
+                    Old Goa churches walk
+                  </span>
                 </span>
-              </span>
-              <CloudRain
-                aria-hidden
-                strokeWidth={1.8}
-                className="size-5 text-muted-foreground"
-              />
-              <span className="min-w-0 leading-snug">
-                <span className="tabular block text-[13px] font-semibold text-truck-green-ink">
-                  15:00 · New
-                </span>
-                <span className="block text-[15px] font-semibold">
-                  Old Goa churches walk
-                </span>
-              </span>
-            </div>
-          </article>
+              </div>
+            </article>
+          </div>
         </div>
       </div>
     </section>

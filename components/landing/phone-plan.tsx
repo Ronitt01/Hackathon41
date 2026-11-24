@@ -2,6 +2,7 @@ import Image from "next/image";
 import { CalendarDays, Check, ChevronLeft } from "lucide-react";
 import { PaintedBoard } from "@/components/kafila/painted-board";
 import { ReflectorBar } from "@/components/kafila/reflector-bar";
+import { cn } from "@/lib/utils";
 import { photo } from "./kit";
 
 // The demo trip's fair-plan state: six friends, the group minimum at 64%. Scores are anonymous, lowest first.
@@ -13,6 +14,19 @@ const STOPS = [
   { day: "Day 2", time: "09:30", title: "Fontainhas café trail", place: "Panjim", subject: "fontainhas" },
 ];
 
+// Each block (and itinerary row) shows only when the phone is tall enough to hold it whole, so the panel's foot never
+// cuts through a line. Thresholds: the block's bottom edge in the phone + 8px; on a narrow screen (<= 306px) the board
+// takes three lines and the card wraps more, so it uses the worst case (a 218px screen). Literal strings for Tailwind.
+const FITS = {
+  scores: "[@container_(max-height:348px)]:hidden [@container_(max-width:306px)_and_(max-height:373px)]:hidden",
+  why: "[@container_(max-height:526px)]:hidden [@container_(max-width:306px)_and_(max-height:591px)]:hidden",
+  stops: [
+    "[@container_(max-height:640px)]:hidden [@container_(max-width:306px)_and_(max-height:704px)]:hidden",
+    "[@container_(max-height:713px)]:hidden [@container_(max-width:306px)_and_(max-height:777px)]:hidden",
+    "[@container_(max-height:785px)]:hidden [@container_(max-width:306px)_and_(max-height:850px)]:hidden",
+  ],
+};
+
 /**
  * The hero's picture is the product: Kafila's Plan tab, rendered as live HTML in a phone frame that runs
  * off the bottom of its panel. One labelled image for assistive tech; nothing inside is interactive.
@@ -22,9 +36,10 @@ export function PhonePlan({ className }: { className?: string }) {
     <div
       role="img"
       aria-label="Kafila's Plan tab for a Goa trip: a painted board says Fits everyone's budget, the group minimum is 64%, your share is ₹6,850, and day 1 starts at Anjuna beach."
-      className={className}
+      className={cn("[container-type:size]", className)}
     >
-      <div className="flex h-full flex-col overflow-hidden rounded-t-[34px] border-[7px] border-b-0 border-ink bg-wash">
+      {/* The bezel is a ring (drawn outside the screen, like the Card's ink ring), so the screen is the only box around its UI. */}
+      <div className="flex h-full flex-col overflow-hidden rounded-t-[27px] bg-wash ring-[7px] ring-ink">
         <div className="flex h-14 shrink-0 items-center gap-1.5 border-b-4 border-truck-green px-2">
           <span className="grid size-9 place-items-center rounded-full">
             <ChevronLeft aria-hidden className="size-5" />
@@ -36,12 +51,12 @@ export function PhonePlan({ className }: { className?: string }) {
           <span className="pr-1.5 text-[11px] font-bold tracking-[0.12em] text-muted-foreground uppercase">Kafila</span>
         </div>
 
-        <div className="grid content-start gap-3.5 px-3.5 pt-3.5">
+        <div className="grid grid-cols-[minmax(0,1fr)] content-start gap-3 px-3.5 pt-3.5">
           <PaintedBoard>Fits everyone&apos;s budget</PaintedBoard>
 
-          <div className="grid gap-1.5">
+          <div className={cn("grid gap-1.5", FITS.scores)}>
             <p className="text-[15px] leading-snug font-bold">How well it fits everyone</p>
-            <ul className="grid grid-cols-[96px_1fr_36px] items-center gap-x-2 gap-y-1.5">
+            <ul className="grid grid-cols-[96px_1fr_36px] items-center gap-x-2 gap-y-1">
               {SCORES.map((s, i) => (
                 <li key={i} className="col-span-3 grid grid-cols-subgrid items-center">
                   <span className="text-[13px] font-bold">{i === 0 && "Group minimum"}</span>
@@ -52,7 +67,7 @@ export function PhonePlan({ className }: { className?: string }) {
             </ul>
           </div>
 
-          <div className="rounded-xl border bg-card px-3.5 py-3">
+          <div className={cn("rounded-xl border bg-card px-3.5 py-3", FITS.why)}>
             <p className="mb-1.5 text-[15px] leading-snug font-bold">Why this works for you</p>
             <ul className="grid gap-1 text-[14px]">
               {WHY.map((line) => (
@@ -68,16 +83,16 @@ export function PhonePlan({ className }: { className?: string }) {
             </p>
           </div>
 
-          <div className="grid gap-2 pb-6">
+          <div className={cn("grid grid-cols-[minmax(0,1fr)] gap-1.5 pb-6", FITS.stops[0])}>
             <p className="flex items-center gap-1.5 text-[15px] font-bold">
               <CalendarDays aria-hidden strokeWidth={1.8} className="size-4" />
               Itinerary
             </p>
             <ol className="divide-y rounded-xl border bg-card px-3">
-              {STOPS.map((s) => {
+              {STOPS.map((s, i) => {
                 const p = photo(s.subject);
                 return (
-                  <li key={s.title} className="flex items-center gap-3 py-2.5">
+                  <li key={s.title} className={cn("flex items-center gap-3 py-2", i > 0 && FITS.stops[i])}>
                     <Image src={p.file} alt="" width={96} height={96} sizes="48px" className="size-12 shrink-0 rounded-lg object-cover" />
                     <span className="min-w-0 leading-snug">
                       <span className="block text-[13px] font-semibold text-muted-foreground tabular">

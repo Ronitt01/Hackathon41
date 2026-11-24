@@ -27,7 +27,7 @@ export const DEMO_SECONDARY =
 
 /** Nav and footer words: bare at rest, darken and draw a 1px line under the word on hover. */
 export const NAV_LINK =
-  "relative inline-flex h-11 items-center text-[15px] font-semibold text-muted-foreground transition-colors duration-150 hover:text-ink after:absolute after:inset-x-0 after:bottom-2.5 after:h-px after:origin-left after:scale-x-0 after:bg-ink after:transition-transform after:duration-150 hover:after:scale-x-100 motion-reduce:after:transition-none";
+  "relative inline-flex h-11 items-center text-[15px] font-semibold text-muted-foreground transition-[color] duration-150 hover:text-ink after:absolute after:inset-x-0 after:bottom-2.5 after:h-px after:origin-left after:scale-x-0 after:bg-ink after:transition-transform after:duration-150 hover:after:scale-x-100 motion-reduce:after:transition-none";
 
 export type Photo = (typeof photos)[number];
 /** A Goa frame from public/photos/manifest.json, by subject. Each is used once on the page. */
