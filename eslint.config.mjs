@@ -12,6 +12,10 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Local check-tool output (Taste Skill Chrome profiles, screenshots, Playwright logs).
+    ".taste-skill/**",
+    "shots/**",
+    ".playwright-mcp/**",
   ]),
 ]);
 

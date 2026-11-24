@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { generateCandidates } from "@/lib/ai";
-import { pickFairPlan, type FairMember } from "@/lib/fairness";
+import { pickFairPlan, scoreCandidate, type FairMember } from "@/lib/fairness";
 import { applyTaste, tripDays, type PlanStop, type ReactionCounts } from "@/lib/plan-candidates";
 import { createAdminClient, MISSING_SECRET_KEY } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -95,7 +95,12 @@ export async function POST(_request: Request, ctx: RouteContext<"/api/trips/[id]
     homeCities: [...new Set(fairMembers.map((m) => m.homeCity).filter((c): c is string => !!c))],
   });
   const best = pickFairPlan(candidates, fairMembers, planOptions, reactionRows);
-  if (!best) return NextResponse.json({ status: "no_fit" }); // never say whose budget
+  // For the reveal: counts only, never which member's budget a candidate broke.
+  const counts = {
+    candidates: candidates.length,
+    overBudget: candidates.filter((c) => !scoreCandidate(c, fairMembers, planOptions, reactionRows).feasible).length,
+  };
+  if (!best) return NextResponse.json({ status: "no_fit", ...counts }); // never say whose budget
   const winner = candidates[best.index];
 
   // Save. If anything after the plan insert fails, delete the new plan (cascades to stops + plan_members).
@@ -157,14 +162,14 @@ export async function POST(_request: Request, ctx: RouteContext<"/api/trips/[id]
     const { data, error } = await write();
     if (error || (data && data.length === 0)) {
       await admin.from("plans").delete().eq("id", plan.id);
-      if (!error) return NextResponse.json({ status: "ok" }); // someone else's new plan landed first; realtime shows it
+      if (!error) return NextResponse.json({ status: "ok", ...counts }); // someone else's new plan landed first; realtime shows it
       console.error("plan: save failed", error); // server log only: plan_members errors can echo private values
       return fail(500, "Couldn't save the plan. Please try again.");
     }
   }
   if (trip.active_plan_id) await admin.from("plans").update({ status: "discarded" }).eq("id", trip.active_plan_id);
 
-  return NextResponse.json({ status: "ok", planId: plan.id });
+  return NextResponse.json({ status: "ok", planId: plan.id, ...counts });
 }
 
 /**

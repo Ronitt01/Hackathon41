@@ -38,12 +38,12 @@ export async function updateSession(request: NextRequest) {
   const { data } = await supabase.auth.getClaims()
   const user = data?.claims
 
-  // Only trip pages need a session. "/", /join/* (guests sign in there) and /p/* (parent view) work logged out.
+  // Only trip pages need a session. "/" (landing), /start, /join/* (guests sign in there) and /p/* (parent view) work logged out.
   // This is a convenience redirect, not security: RLS is what actually protects trip data.
   if (!user && request.nextUrl.pathname.startsWith('/trips')) {
     const url = request.nextUrl.clone()
-    url.pathname = '/'
-    url.search = `?next=${encodeURIComponent(request.nextUrl.pathname)}`
+    url.pathname = '/start'
+    url.search = `?next=${encodeURIComponent(request.nextUrl.pathname + request.nextUrl.search)}`
     return NextResponse.redirect(url)
   }
 

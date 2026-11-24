@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "Kafila",
     short_name: "Kafila",
     description: "Group trip planning that's fair to everyone.",
-    start_url: "/",
+    start_url: "/start",
     display: "standalone",
     background_color: "#F4F6F1",
     theme_color: "#F4F6F1",

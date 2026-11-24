@@ -1,6 +1,6 @@
 // Kafila offline worker (T-6). Bump VERSION to drop every old cache on the next activate.
 // shortcut: the static cache is never pruned, so old hashed chunks pile up; bump VERSION each deploy.
-const VERSION = "v1";
+const VERSION = "v2";
 const PAGES = `kafila-pages-${VERSION}`;
 const STATIC = `kafila-static-${VERSION}`;
 const KEEP = [PAGES, STATIC];
@@ -8,7 +8,7 @@ const KEEP = [PAGES, STATIC];
 const NETWORK_TIMEOUT_MS = 4000;
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(caches.open(PAGES).then((cache) => cache.add("/")).then(() => self.skipWaiting()));
+  event.waitUntil(caches.open(PAGES).then((cache) => cache.add("/start")).then(() => self.skipWaiting()));
 });
 
 self.addEventListener("activate", (event) => {
@@ -22,7 +22,7 @@ self.addEventListener("activate", (event) => {
 
 /** Only the home list and trip pages are worth keeping offline. */
 function isPage(url) {
-  return url.origin === self.location.origin && (url.pathname === "/" || url.pathname.startsWith("/trips/"));
+  return url.origin === self.location.origin && (url.pathname === "/start" || url.pathname.startsWith("/trips/"));
 }
 
 self.addEventListener("fetch", (event) => {
@@ -81,7 +81,7 @@ async function networkFirst(event) {
     return response;
   } catch (error) {
     const cache = await caches.open(PAGES);
-    const cached = (await cache.match(request, { ignoreVary: true, ignoreSearch: true })) || (await cache.match("/", { ignoreVary: true }));
+    const cached = (await cache.match(request, { ignoreVary: true, ignoreSearch: true })) || (await cache.match("/start", { ignoreVary: true }));
     if (cached) return cached;
     throw error;
   }

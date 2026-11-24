@@ -36,7 +36,7 @@ export async function FairPlanCard({ tripId, planId }: { tripId: string; planId:
       )}
 
       {scores.length > 0 && (
-        <section key={planId} className="grid gap-2" aria-labelledby="fair-meter">
+        <section key={`${planId}-meter`} className="grid gap-2" aria-labelledby="fair-meter">
           <h2 id="fair-meter" className="text-[15px] leading-snug font-bold">How well it fits everyone</h2>
           <ul className="grid grid-cols-[104px_1fr_40px] items-center gap-x-2 gap-y-1.5">
             {scores.map((s, i) => (

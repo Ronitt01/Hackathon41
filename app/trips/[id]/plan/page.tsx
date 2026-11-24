@@ -1,5 +1,6 @@
 import { FairPlanCard } from "@/components/fair-plan/fair-plan-card";
 import { MakeFairPlan } from "@/components/fair-plan/make-fair-plan";
+import { REVEAL_SLOT } from "@/components/fair-plan/reveal-cards";
 import { ChaiNote } from "@/components/itinerary/chai-note";
 import { STOP_COLUMNS } from "@/components/itinerary/days";
 import { Itinerary, type Rating, type Stop } from "@/components/itinerary/itinerary";
@@ -14,12 +15,18 @@ import { lovedTags, tasteWeights } from "@/lib/taste";
 
 const DEFAULT_TRIP_DAYS = 4;
 
-export default async function PlanPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
+export default async function PlanPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const [{ id }, { reveal }] = await Promise.all([params, searchParams]);
   const supabase = await createClient();
   const [{ data: trip }, { data: members }, { data: auth }, { data: busy }, { data: ratings }, { data: otherTrips }] = await Promise.all([
     supabase.from("trips").select("id, destination, start_date, end_date, active_plan_id, previous_trip_id").eq("id", id).single(),
-    supabase.from("members").select("id, user_id, role, status, home_city").eq("trip_id", id),
+    supabase.from("members").select("id, user_id, role, status, home_city, display_name").eq("trip_id", id).order("joined_at"),
     supabase.auth.getUser(),
     supabase.from("availability").select("member_id, busy_on").eq("trip_id", id),
     supabase.from("stop_ratings").select("stop_id, member_id, rating").eq("trip_id", id),
@@ -55,6 +62,8 @@ export default async function PlanPage({ params }: { params: Promise<{ id: strin
 
   return (
     <>
+      {/* The fair-plan reveal plays here (MakeFairPlan portals into it). */}
+      <div id={REVEAL_SLOT} className="scroll-mt-20 empty:hidden" />
       <FairPlanCard tripId={trip.id} planId={trip.active_plan_id} />
 
       <section className="mt-2 grid gap-3" aria-labelledby="itinerary">
@@ -113,7 +122,12 @@ export default async function PlanPage({ params }: { params: Promise<{ id: strin
         <PreviousTrip tripId={trip.id} isOrganizer={isOrganizer} previousTripId={trip.previous_trip_id} trips={otherTrips ?? []} loved={loved} />
       </div>
 
-      <MakeFairPlan tripId={trip.id} again={plan?.generated_by === "ai"} />
+      <MakeFairPlan
+        tripId={trip.id}
+        again={plan?.generated_by === "ai"}
+        members={active.map((m) => m.display_name ?? "Friend")}
+        autoStart={reveal === "1" && isActive && plan?.generated_by !== "ai"} // ?reveal=1 from the demo trip
+      />
     </>
   );
 }

@@ -1,0 +1,46 @@
+/* The hero enters once on load: the h1's words rise out of their masks, then the lead and the
+   buttons fade up 12px, while the photograph and the phone settle. Under reduced motion the hero
+   simply stands as written. Transform and opacity only; ease-out with no overshoot. */
+
+.word {
+  display: inline-block;
+  overflow: clip;
+  /* room for descenders inside the mask, without changing the line box */
+  padding-bottom: 0.12em;
+  margin-bottom: -0.12em;
+  vertical-align: top;
+}
+.word > span {
+  display: inline-block;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .word > span {
+    animation: rise 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation-delay: calc(var(--w) * 30ms);
+  }
+  .after {
+    animation: fade-up 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation-delay: calc(380ms + var(--a) * 60ms);
+  }
+  /* the picture is never hidden: it only settles */
+  .photo {
+    animation: settle-photo 1100ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .device {
+    animation: settle-device 900ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+}
+
+@keyframes rise {
+  from { transform: translateY(105%); }
+}
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(12px); }
+}
+@keyframes settle-photo {
+  from { transform: scale(1.05); }
+}
+@keyframes settle-device {
+  from { transform: scale(0.98); }
+}

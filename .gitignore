@@ -48,3 +48,10 @@ supabase/.branches
 
 # Playwright MCP run artifacts
 .playwright-mcp/
+
+.vercel
+.env*
+
+# taste-skill check artifacts
+.taste-skill/
+shots/
