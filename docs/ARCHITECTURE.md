@@ -23,7 +23,8 @@ The database enforces this through Row Level Security (RLS). It does not rely on
 | # | Decision | Choice | Why |
 |---|---|---|---|
 | 1 | Frontend | **Next.js** (App Router, React, TypeScript), PWA | The team already knows it (Hospass). Server routes keep private logic off the client. |
-| 2 | Backend / DB | **Supabase**: Postgres, RLS, Realtime, Auth, Storage | RLS enforces budget privacy inside the database. SQL suits money math. |
+| 2a | Backend | **Node.js**: Next.js route handlers (`app/api/**/route.ts`) and server components, on the Node.js runtime. Vercel runs them as Node.js functions. | One codebase and one deploy. Any work that reads private rows or calls Claude runs here, never in the browser. |
+| 2b | Database | **Supabase**: PostgreSQL with RLS, plus Realtime, Auth and Storage | RLS enforces budget privacy inside the database. SQL suits money math. |
 | 3 | Data access | **Hybrid** | Normal data goes browser → Supabase directly, under RLS, with realtime for free. Private and AI work goes through Next.js server routes. |
 | 4 | LLM | **Claude** via `@anthropic-ai/sdk`, called only from the server | Structured JSON output and vision (receipts). |
 | 5 | Join / auth | **Guest + Google** | Supabase anonymous sign-in with just a name. People can link Google later. |
@@ -42,13 +43,14 @@ The database enforces this through Row Level Security (RLS). It does not rely on
  │   • private / AI actions ──► /api/* ─┐                                      │
  └──────────────────────────────────────┼──────────────────────────────────────┘
                                         ▼
- ┌──────────────────── Next.js server (Vercel) ─────────────────────┐
- │  route handlers  /api/trips/[id]/...                             │
+ ┌──────── Backend: Next.js server on Node.js (Vercel functions) ───┐
+ │  route handlers  /api/demo, /api/trips/[id]/...                  │
  │   lib/fairness   lib/settle   lib/rooms   lib/ai   lib/privacy   │
  │   uses SUPABASE_SECRET_KEY + ANTHROPIC_API_KEY (server only)      │
  └───────┬───────────────────────┬───────────────────────┬──────────┘
          ▼                       ▼                       ▼
-   Supabase Postgres       Claude API              Open-Meteo
+   Database: Supabase      Claude API              Open-Meteo
+   PostgreSQL (34 tables)
    (+ Storage: receipts,   (plans, chat import,    (weather, no key)
     photos, documents)      receipts, re-plan)
 
@@ -93,36 +95,38 @@ A trip can have more than one organizer (`members.role = 'organizer'`).
 
 | Goes directly to Supabase (RLS) | Goes through a Next.js server route | Postgres function (`security definer`) |
 |---|---|---|
-| | | `create_trip`, `join_trip(code, name)`, `confirm_pledge` (mocked) |
+| | Seed the demo trip | `create_trip`, `join_trip(code, name)`, `confirm_pledge` (mocked) |
 | Trips, members, itinerary stops | Generate the AI plan (fairness) | `jar_readiness(trip)` → "X of Y on track" |
-| Options, aspects, reactions, comments | Budget-fit check for an option | `mood_summary(trip, day)` → average + counts |
-| Expenses, shares, settlements | Use a veto (anonymous) | `fairness_bars(plan)` → sorted scores, no IDs |
-| My own budget, Jar, preferences, signals | Auto-lock decision + AI compromise | `is_trip_member(trip)` (used by RLS) |
-| Tasks, packing list, photos, docs, chat | Chat-to-plan import | |
-| | Receipt scan (vision) | |
-| | Fair room pricing | |
-| | Dropout recalculation | |
+| Options, aspects, reactions, comments | Use a veto (anonymous) | `mood_summary(trip, day)` → average + counts |
+| Expenses, shares, settlements | Auto-lock decision + AI compromise | `fairness_bars(plan)` → sorted scores, no IDs |
+| My own budget, Jar, preferences, signals | Chat-to-plan import | `option_fit(option)` → fits everyone's budget? yes/no |
+| Tasks, packing list, photos, docs, chat | Fair room pricing | `option_scores(decision)` → group fit scores |
+| | Dropout recalculation | `is_trip_member`, `is_trip_organizer`, `my_member_id` (used by RLS) |
 | | Live re-planning | |
-| | Parent page `/p/[token]` | |
-| | Trip Wrapped data | |
+| | Parent page `/p/[token]` (server component) | |
+| | Trip Wrapped data (server component) | |
+
+Not built yet: receipt scan (vision).
 
 Server routes are **internal**. They exist for this app only and are not a public API. Unlike Hospass, Kafila has no outside integrators, so they need no versioning or public contract.
 
-### Server routes (v1)
+### Server routes (Node.js, as built)
 
 ```text
+POST /api/demo                         seed a sample Goa trip for the caller → { tripId }
 POST /api/trips/[id]/plan              generate candidates → pick fairest → save
-POST /api/trips/[id]/options/[oid]/fit fits everyone's budget? → { fits: boolean }
 POST /api/trips/[id]/options/[oid]/veto
 POST /api/trips/[id]/decisions/[did]/lock
 POST /api/trips/[id]/import-chat       body: WhatsApp .txt → proposed options (not saved until the organizer reviews them)
-POST /api/trips/[id]/receipts          image → line items (draft)
 POST /api/trips/[id]/rooms/price       → bed assignment + prices
 POST /api/trips/[id]/members/[mid]/drop  → new cost per head, rooms, budget re-check
-POST /api/trips/[id]/replan            trigger: rain | tired | delay
-GET  /api/trips/[id]/wrapped
+POST /api/trips/[id]/replan            trigger: rain | tired | delay → proposal
+PUT  /api/trips/[id]/replan            accept the proposal
 GET  /p/[token]                        parent page (server component)
+GET  /auth/callback                    Google sign-in callback
 ```
+
+The budget-fit check is the Postgres function `option_fit`, not a route (migration `0002_decide.sql`). Trip Wrapped is a server component that reads existing tables.
 
 Every route checks the following, in this order:
 1. The caller has a valid Supabase session.
