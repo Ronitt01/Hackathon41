@@ -13,6 +13,8 @@ export type Option = {
   vetoed_at: string | null;
   vetoed_by_name: string | null;
   decision_id: string | null;
+  /** "ai" = suggested by Kafila, its price an estimate. */
+  source: string;
 };
 export type Aspect = { id: string; option_id: string; label: string; value: string | null; position: number };
 export type Reaction = { id: string; option_id: string; aspect_id: string | null; member_id: string; kind: "like" | "rose" };
@@ -21,6 +23,7 @@ export type Decision = { id: string; question: string; kind: string; deadline: s
 
 export type DecideData = {
   planId: string | null;
+  destination: string | null;
   members: Member[];
   options: Option[];
   aspects: Aspect[];
@@ -39,11 +42,11 @@ export type DecideData = {
 /** Everything the Decide tab shows. Works with the server or the browser client (RLS applies to both). */
 export async function loadDecide(supabase: SupabaseClient, tripId: string): Promise<DecideData> {
   const [trip, members, options, aspects, reactions, comments, decisions, vetoes, scores, fit] = await Promise.all([
-    supabase.from("trips").select("active_plan_id, start_date, end_date").eq("id", tripId).single(),
+    supabase.from("trips").select("active_plan_id, destination, start_date, end_date").eq("id", tripId).single(),
     supabase.from("members").select("id, display_name, status, role").eq("trip_id", tripId).order("joined_at"),
     supabase
       .from("options")
-      .select("id, kind, title, description, price_paise, image_url, tags, vetoed_at, vetoed_by_name, decision_id")
+      .select("id, kind, title, description, price_paise, image_url, tags, vetoed_at, vetoed_by_name, decision_id, source")
       .eq("trip_id", tripId)
       .order("created_at", { ascending: false }),
     supabase.from("option_aspects").select("id, option_id, label, value, position").eq("trip_id", tripId).order("position"),
@@ -67,6 +70,7 @@ export async function loadDecide(supabase: SupabaseClient, tripId: string): Prom
 
   return {
     planId,
+    destination: trip.data?.destination ?? null,
     members: members.data as Member[],
     options: options.data as Option[],
     aspects: aspects.data as Aspect[],

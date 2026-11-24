@@ -12,6 +12,8 @@ import { CompareStays } from "./compare-stays";
 import { loadDecide, reactionsOn, type DecideData } from "./data";
 import { Decisions, NewDecisionForm } from "./decisions";
 import { ImportChat } from "./import-chat";
+import { SuggestOptions } from "./suggest-options";
+import { kindsFor } from "@/lib/suggest";
 import { CHIP, OptionCard, toggleClass } from "./option-card";
 
 const FILTERS = [
@@ -41,6 +43,7 @@ export function DecideBoard({
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState(0);
   const [panel, setPanel] = useState<"add" | "compare" | "decision" | "import" | null>(null);
+  const [suggesting, setSuggesting] = useState(false);
   const latest = useRef(0);
 
   const refresh = useCallback(async () => {
@@ -90,6 +93,9 @@ export function DecideBoard({
     fav.likes > 0 && `${fav.likes} ${fav.likes === 1 ? "like" : "likes"}`,
     fav.roses > 0 && `${fav.roses} ${fav.roses === 1 ? "Rose" : "Roses"}`,
   ].filter(Boolean).join(" · ");
+  // Kafila fills the board once per stage: destinations first, then stays, food and activities once a destination is set.
+  const suggestKinds: string[] = kindsFor(data.destination);
+  const needsSuggestions = !data.options.some((o) => o.source === "ai" && suggestKinds.includes(o.kind));
   const kinds = FILTERS[filter].kinds;
   const shown = data.options
     .filter((o) => !kinds || kinds.includes(o.kind))
@@ -108,6 +114,9 @@ export function DecideBoard({
           <Columns2 aria-hidden className="size-[18px]" strokeWidth={1.8} />
           Compare stays
         </Button>
+      </div>
+      <div className="grid gap-2">
+        <SuggestOptions tripId={tripId} destination={data.destination} auto={needsSuggestions} onAdded={refresh} onPendingChange={setSuggesting} />
       </div>
       {isOrganizer && (
         <div className="grid grid-cols-2 gap-2">
@@ -164,7 +173,7 @@ export function DecideBoard({
       </div>
 
       {error && <p role="alert" className="text-[15px] text-destructive">{error}</p>}
-      {data.options.length === 0 ? (
+      {data.options.length === 0 && !suggesting ? (
         <div className="grid justify-items-center gap-2 rounded-xl border border-dashed border-border bg-card px-4 py-8 text-center">
           {/* eslint-disable-next-line @next/next/no-img-element -- static decorative SVG */}
           <img src="/illustrations/chai.svg" alt="" width={96} height={96} className="size-24" />

@@ -164,13 +164,15 @@ export function OptionCard({ option: o, data, names, meId, tripId, myRose, activ
         <header className="grid gap-1.5">
           <div className="flex flex-wrap gap-1.5">
             <span className={CHIP}>{KIND_LABEL[o.kind] ?? o.kind}</span>
-            {vetoed && <span className={cn(CHIP, "border-truck-red text-truck-red")}>{o.vetoed_by_name ? `Vetoed by ${o.vetoed_by_name}` : "Vetoed"}</span>}
+            {o.source === "ai" && <span className={cn(CHIP, "border-border text-muted-foreground")}>Suggested by Kafila</span>}
+            {vetoed &&<span className={cn(CHIP, "border-truck-red text-truck-red")}>{o.vetoed_by_name ? `Vetoed by ${o.vetoed_by_name}` : "Vetoed"}</span>}
             {vetoed && !o.vetoed_by_name && data.myVetoes.includes(o.id) && <span className={CHIP}>Your veto, only you see this</span>}
           </div>
           <h3 className="text-[17px] leading-snug font-bold">{o.title}</h3>
           {o.price_paise != null && (
             <p className="tabular text-[15px]">
-              <span className="font-semibold">{inr(o.price_paise)}</span> total
+              {o.source === "ai" && "About "}
+              <span className="font-semibold">{inr(o.price_paise)}</span> total{o.source === "ai" && ", estimated"}
               <span className="text-muted-foreground"> · {inr(splitEqually(o.price_paise, activeCount)[0])} per head</span>
             </p>
           )}
