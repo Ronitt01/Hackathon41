@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { Ban, Columns2, Flower2, MessageSquareText, Plus, Timer, X } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { Ban, Columns2, Flower2, Layers, MessageSquareText, Plus, Timer, X } from "lucide-react";
 import { PaintedBoard } from "@/components/kafila/painted-board";
 import { Button } from "@/components/ui/button";
 import { errorMessage } from "@/lib/supabase/auth";
@@ -13,6 +13,7 @@ import { loadDecide, reactionsOn, type DecideData } from "./data";
 import { Decisions, NewDecisionForm } from "./decisions";
 import { ImportChat } from "./import-chat";
 import { SuggestOptions } from "./suggest-options";
+import { readPassed, SwipeDeck } from "./swipe-deck";
 import { kindsFor } from "@/lib/suggest";
 import { CHIP, OptionCard, toggleClass } from "./option-card";
 
@@ -24,6 +25,7 @@ const FILTERS = [
   { label: "Destinations", kinds: ["destination"] },
   { label: "Other", kinds: ["transport", "other"] },
 ];
+const noSubscribe = () => () => {};
 const LIVE_TABLES = ["options", "option_aspects", "reactions", "comments", "stops", "decisions"];
 
 /** D-1 / D-2 / C-3: options with likes, Roses, comments and group fit, kept live with Realtime. */
@@ -31,11 +33,14 @@ export function DecideBoard({
   tripId,
   meId,
   initial,
+  startVoting = false,
   children,
 }: {
   tripId: string;
   meId: string;
   initial: DecideData;
+  /** Open Quick vote straight away (the Trip tab's "React to N ideas" links here with ?vote=1). */
+  startVoting?: boolean;
   /** Rendered under the favourite board (the page's budget & preferences row). */
   children?: React.ReactNode;
 }) {
@@ -44,6 +49,10 @@ export function DecideBoard({
   const [filter, setFilter] = useState(0);
   const [panel, setPanel] = useState<"add" | "compare" | "decision" | "import" | null>(null);
   const [suggesting, setSuggesting] = useState(false);
+  const [voting, setVoting] = useState(false);
+  // Skips live in this phone's storage; read on every render (a string compare), so closing the deck picks up new ones.
+  const passedRaw = useSyncExternalStore(noSubscribe, () => JSON.stringify(readPassed(tripId, meId)), () => "[]");
+  const passed = useMemo(() => JSON.parse(passedRaw) as string[], [passedRaw]);
   const latest = useRef(0);
 
   const refresh = useCallback(async () => {
@@ -96,6 +105,17 @@ export function DecideBoard({
   // Kafila fills the board once per stage: destinations first, then stays, food and activities once a destination is set.
   const suggestKinds: string[] = kindsFor(data.destination);
   const needsSuggestions = !data.options.some((o) => o.source === "ai" && suggestKinds.includes(o.kind));
+  // Ideas I haven't hearted, given a Rose to, or skipped: the Quick vote deck.
+  const unvoted = data.options.filter(
+    (o) => !o.vetoed_at && !passed.includes(o.id) && !data.reactions.some((r) => r.option_id === o.id && r.member_id === meId && r.aspect_id === null),
+  );
+  const autoOpened = useRef(false);
+  useEffect(() => {
+    if (startVoting && !autoOpened.current && unvoted.length > 0) {
+      autoOpened.current = true;
+      setVoting(true);
+    }
+  }, [startVoting, unvoted.length]);
   const kinds = FILTERS[filter].kinds;
   const shown = data.options
     .filter((o) => !kinds || kinds.includes(o.kind))
@@ -104,6 +124,16 @@ export function DecideBoard({
   return (
     <section className="grid gap-4" aria-label="Options">
       {fav && <PaintedBoard note={favNote || undefined}>{fav.title}</PaintedBoard>}
+      {voting ? (
+        <SwipeDeck tripId={tripId} meId={meId} options={unvoted} activeCount={activeCount} onClose={() => setVoting(false)} onChange={refresh} />
+      ) : (
+        unvoted.length > 0 && (
+          <Button className="h-12 bg-truck-green-ink text-[16px] text-white hover:bg-truck-green-ink/90" onClick={() => setVoting(true)}>
+            <Layers aria-hidden className="size-[18px]" strokeWidth={1.8} />
+            Quick vote: {unvoted.length} {unvoted.length === 1 ? "idea" : "ideas"}
+          </Button>
+        )
+      )}
       {children}
       <div className="grid grid-cols-2 gap-2">
         <Button variant={panel === "add" ? "outline" : "default"} className={panel === "add" ? "border-input bg-card" : undefined} onClick={() => setPanel(panel === "add" ? null : "add")}>

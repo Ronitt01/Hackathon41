@@ -27,7 +27,7 @@ export function pickStep(s: {
       action: "Make the fair plan",
     };
   if (s.options > 0 && !s.reacted)
-    return { title: `React to ${s.options} ${s.options === 1 ? "idea" : "ideas"}`, text: "Heart what you like, give one Rose. It shapes the plan.", href: `${base}/decide`, action: "See the ideas" };
+    return { title: `React to ${s.options} ${s.options === 1 ? "idea" : "ideas"}`, text: "Swipe right on what you like. Takes a minute.", href: `${base}/decide?vote=1`, action: "Start swiping" };
   return {
     title: "Waiting on the group",
     text: `${budgets} ${s.isOrganizer ? "Make the fair plan once at least 2 are in." : "The organizer makes the fair plan once budgets are in."}`.trim(),

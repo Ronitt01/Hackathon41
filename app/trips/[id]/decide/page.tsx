@@ -5,8 +5,9 @@ import { loadDecide } from "@/components/decide/data";
 import { createClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
 
-export default async function DecidePage({ params }: { params: Promise<{ id: string }> }) {
+export default async function DecidePage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ vote?: string }> }) {
   const { id } = await params;
+  const { vote } = await searchParams;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   const { data: me } = await supabase.from("members").select("id").eq("trip_id", id).eq("user_id", user?.id ?? "").maybeSingle();
@@ -17,7 +18,7 @@ export default async function DecidePage({ params }: { params: Promise<{ id: str
   ]);
 
   return (
-    <DecideBoard tripId={id} meId={me.id} initial={data}>
+    <DecideBoard tripId={id} meId={me.id} initial={data} startVoting={vote === "1"}>
       <Link
         href={`/trips/${id}/decide/me`}
         className={cn(

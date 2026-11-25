@@ -51,7 +51,7 @@ export default async function TripLayout({ children, params }: { children: React
       <div className="flex-1 lg:grid lg:grid-cols-[13rem_minmax(0,1fr)] xl:grid-cols-[15rem_minmax(0,1fr)]">
         <TripRail tripId={trip.id} title={trip.name} meta={meta} />
         <div className="lg:flex lg:justify-center lg:gap-6 lg:px-6 xl:gap-8 xl:px-8">
-          <main className="mx-auto grid w-full max-w-md content-start gap-4 px-4 pt-4 pb-28 lg:mx-0 lg:max-w-[680px] lg:min-w-0 lg:flex-1 lg:px-0 lg:pt-8 lg:pb-16">
+          <main className="mx-auto grid w-full max-w-md content-start gap-4 overflow-x-clip px-4 pt-4 pb-28 lg:mx-0 lg:max-w-[680px] lg:min-w-0 lg:flex-1 lg:px-0 lg:pt-8 lg:pb-16">
             {children}
           </main>
           <aside aria-label="Trip at a glance" className="sticky top-0 hidden w-72 shrink-0 self-start pt-8 pb-8 lg:block xl:w-80">
