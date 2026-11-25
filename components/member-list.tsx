@@ -28,12 +28,15 @@ export function MemberList({
   meId,
   isOrganizer = false,
   pledgePaise,
+  planReady = true,
 }: {
   tripId: string;
   initial: Member[];
   meId?: string | null;
   isOrganizer?: boolean;
   pledgePaise?: number;
+  /** Before the fair plan, nobody is asked to pledge: there is nothing to commit to yet, so no In/Maybe either. */
+  planReady?: boolean;
 }) {
   const router = useRouter();
   const toast = useToast();
@@ -104,7 +107,7 @@ export function MemberList({
               </span>
               {m.task_role && <span className="truncate text-[13px] text-muted-foreground">{m.task_role}</span>}
             </span>
-            {m.status === "confirmed" ? (
+            {!planReady ? null : m.status === "confirmed" ? (
               <span className="flex items-center gap-1 rounded-full bg-truck-green-ink px-2.5 text-[13px] leading-6 font-semibold text-white">
                 <Check aria-hidden strokeWidth={2.4} className="size-3.5" />
                 {STATUS_LABEL.confirmed}
@@ -116,7 +119,7 @@ export function MemberList({
         ))}
       </ul>
 
-      {me?.status === "maybe" && (
+      {planReady && me?.status === "maybe" && (
         <div className="grid gap-1">
           <Button type="button" onClick={confirm} disabled={pending} className="h-11 w-full">
             {pending ? "Confirming…" : pledge > 0 ? `Confirm with ${inr(pledge)} pledge` : "Confirm I'm in"}
@@ -127,7 +130,7 @@ export function MemberList({
         </div>
       )}
       {error && <p role="alert" className="text-[13px] text-destructive">{error}</p>}
-      {isOrganizer && <PledgeEditor tripId={tripId} pledgePaise={pledge} onSaved={setPledge} />}
+      {planReady && isOrganizer && <PledgeEditor tripId={tripId} pledgePaise={pledge} onSaved={setPledge} />}
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { ChevronRight, Film, MapPinned, PiggyBank, Users } from "lucide-react";
 import { InviteButton } from "@/components/invite-button";
 import { PaintedBoard } from "@/components/kafila/painted-board";
 import { MemberList, type Member } from "@/components/member-list";
+import { NextStep } from "@/components/next-step";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function TripPage({ params }: { params: Promise<{ id: string }> }) {
@@ -10,7 +11,7 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getUser();
   const [{ data: trip }, { data: members }, { data: me }, { data: tasks }] = await Promise.all([
-    supabase.from("trips").select("id, name, invite_code, pledge_paise").eq("id", id).single(),
+    supabase.from("trips").select("id, name, invite_code, pledge_paise, plans!trips_active_plan_id_fkey(generated_by)").eq("id", id).single(),
     supabase.from("members").select("id, display_name, role, status, task_role").eq("trip_id", id).order("joined_at"),
     supabase.from("members").select("id, role").eq("trip_id", id).eq("user_id", auth.user?.id ?? "").maybeSingle(),
     supabase.from("tasks").select("id, title, owner_member, done").eq("trip_id", id).order("created_at"),
@@ -18,6 +19,9 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
   if (!trip) return null; // layout already 404s for non-members
 
   const active = (members ?? []).filter((m) => m.status !== "dropped");
+  // A fair plan exists once the active plan came from the plan route; the starter plan is "manual".
+  const activePlan = trip.plans as unknown as { generated_by: string } | null;
+  const planReady = activePlan?.generated_by === "ai";
   const confirmed = active.filter((m) => m.status === "confirmed").length;
   const allIn = active.length > 1 && confirmed === active.length;
   const openTasks = (tasks ?? []).filter((t) => !t.done);
@@ -39,12 +43,15 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
   return (
     <>
       {/* Keyed by headcount: a bigger squad all confirming is a new moment; a revisit is not. */}
+      {/* Before the fair plan nobody has pledged yet, so the board counts who joined; after it, who confirmed. */}
       <PaintedBoard
-        note={allIn ? `All ${active.length} confirmed` : confirmed < 2 ? "Share the link to bring the gang" : undefined}
-        celebrate={allIn && `all-in-${trip.id}-${active.length}`}
+        note={active.length <= 1 ? "Share the link to bring the gang" : planReady ? (allIn ? `All ${active.length} confirmed` : "Confirm you're in below") : undefined}
+        celebrate={planReady && allIn && `all-in-${trip.id}-${active.length}`}
       >
-        {active.length <= 1 ? "Just you so far" : allIn ? "Squad's all in" : `${confirmed} of ${active.length} in`}
+        {active.length <= 1 ? "Just you so far" : !planReady ? `${active.length} friends in` : allIn ? "Squad's all in" : `${confirmed} of ${active.length} in`}
       </PaintedBoard>
+
+      {me && <NextStep tripId={trip.id} meId={me.id} isOrganizer={me.role === "organizer"} people={active.length} planReady={planReady} />}
 
       <section aria-labelledby="whos-in" className="grid gap-3">
         <div className="grid gap-0.5">
@@ -57,6 +64,7 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
           meId={me?.id ?? null}
           isOrganizer={me?.role === "organizer"}
           pledgePaise={Number(trip.pledge_paise)} // bigint can arrive as a string
+          planReady={planReady}
         />
         <InviteButton code={trip.invite_code} tripName={trip.name} />
       </section>
