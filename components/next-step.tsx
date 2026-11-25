@@ -1,9 +1,12 @@
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
+import { loadAutoPlan } from "@/lib/auto-plan";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { pickStep } from "@/lib/next-step";
 import { cn } from "@/lib/utils";
+
+const planDay = new Intl.DateTimeFormat("en-IN", { weekday: "short", day: "numeric", month: "short", timeZone: "Asia/Kolkata" });
 
 /** Top of the Trip tab: one clear next step instead of a page of options. */
 export async function NextStep({ tripId, meId, isOrganizer, people, planReady }: { tripId: string; meId: string; isOrganizer: boolean; people: number; planReady: boolean }) {
@@ -13,15 +16,19 @@ export async function NextStep({ tripId, meId, isOrganizer, people, planReady }:
     supabase.from("options").select("id", { count: "exact", head: true }).eq("trip_id", tripId).is("vetoed_at", null),
     supabase.from("reactions").select("id", { count: "exact", head: true }).eq("trip_id", tripId).eq("member_id", meId),
   ]);
+  const auto = await loadAutoPlan(tripId); // null before migration 0003 or without the server key
+  const planBy = auto?.state.planBy;
   const step = pickStep({
     tripId,
     isOrganizer,
     people,
     hasBudget: !!mine.data,
-    budgetsIn: await budgetsIn(tripId),
+    budgetsIn: auto ? auto.state.budgets : await budgetsIn(tripId),
     planReady,
     options: options.count ?? 0,
     reacted: (reactions.count ?? 0) > 0,
+    planByLabel: auto && planBy && Date.parse(planBy) > auto.state.now ? planDay.format(new Date(planBy)) : null, // past deadlines aren't promised
+    askReplan: auto?.decision === "ask_organizer",
   });
 
   return (

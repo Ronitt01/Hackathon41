@@ -63,6 +63,8 @@ export async function POST() {
     if (cleanupError) console.error("demo: cleanup of half-seeded trip failed", tripId, cleanupError);
     return fail(500, "Couldn't fill in the sample trip. Please try again.");
   }
+  // Every sample budget is in, so the automatic plan would race the reveal the caller is about to watch: hold it off.
+  await admin.from("trips").update({ auto_plan_at: new Date().toISOString() }).eq("id", tripId); // fails quietly before 0003
   return NextResponse.json({ tripId });
 }
 

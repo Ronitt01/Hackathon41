@@ -31,3 +31,10 @@ test("a friend with a budget who hasn't reacted is sent to the ideas; otherwise 
 test("no server key: no budget count shown, never 'null of 4'", () => {
   assert.doesNotMatch(pickStep({ ...base, budgetsIn: null }).text, /null/);
 });
+
+test("the deadline shows in the waiting and make-it texts; a late budget after pledges asks the organizer", () => {
+  assert.match(pickStep({ ...base, planByLabel: "Fri, 28 Nov" }).text, /made Fri, 28 Nov, with or without everyone/);
+  assert.match(pickStep({ ...base, isOrganizer: true, planByLabel: "Fri, 28 Nov" }).text, /Kafila makes it Fri, 28 Nov/);
+  assert.equal(pickStep({ ...base, isOrganizer: true, planReady: true, askReplan: true }).title, "A new budget came in");
+  assert.equal(pickStep({ ...base, planReady: true, askReplan: true }).title, "The fair plan is ready"); // friends aren't asked
+});

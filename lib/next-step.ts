@@ -12,17 +12,28 @@ export function pickStep(s: {
   planReady: boolean;
   options: number;
   reacted: boolean;
+  /** "Fri 28 Nov" when the plan gets made with or without everyone; null when there's no deadline. */
+  planByLabel?: string | null;
+  /** A budget changed after people pledged, so the plan didn't re-make itself: the organizer decides. */
+  askReplan?: boolean;
 }): Step {
   const base = `/trips/${s.tripId}`;
   const budgets = s.budgetsIn == null ? "" : `${s.budgetsIn} of ${s.people} budgets in.`;
   if (!s.hasBudget)
     return { title: "Add your budget", text: "Takes 30 seconds. Only you will ever see the number.", href: `${base}/decide/me`, action: "Add my budget" };
+  if (s.planReady && s.isOrganizer && s.askReplan)
+    return {
+      title: "A new budget came in",
+      text: "Some friends already confirmed, so the plan didn't change by itself. Re-make it to include everyone?",
+      href: `${base}/plan`,
+      action: "Re-make the plan",
+    };
   if (s.planReady) return { title: "The fair plan is ready", text: "See what fits you and your share.", href: `${base}/plan`, action: "See the plan", done: true };
   if (s.isOrganizer && s.people <= 1) return { title: "Bring your friends in", text: "Share the invite link in your group chat. They join with just a name." };
   if (s.isOrganizer && (s.budgetsIn ?? 0) >= 2)
     return {
       title: "Make the fair plan",
-      text: `${budgets} ${s.budgetsIn === s.people ? "Everyone's ready." : "Go now, or wait for the rest."}`,
+      text: `${budgets} ${s.budgetsIn === s.people ? "Everyone's ready." : s.planByLabel ? `Kafila makes it ${s.planByLabel} with whoever's in, or go now.` : "Go now, or wait for the rest."}`,
       href: `${base}/plan`,
       action: "Make the fair plan",
     };
@@ -30,7 +41,7 @@ export function pickStep(s: {
     return { title: `React to ${s.options} ${s.options === 1 ? "idea" : "ideas"}`, text: "Swipe right on what you like. Takes a minute.", href: `${base}/decide?vote=1`, action: "Start swiping" };
   return {
     title: "Waiting on the group",
-    text: `${budgets} ${s.isOrganizer ? "Make the fair plan once at least 2 are in." : "The organizer makes the fair plan once budgets are in."}`.trim(),
+    text: `${budgets} ${s.planByLabel ? `The plan gets made ${s.planByLabel}, with or without everyone.` : s.isOrganizer ? "Make the fair plan once at least 2 are in." : "The plan gets made once everyone's budget is in."}`.trim(),
     done: true,
   };
 }

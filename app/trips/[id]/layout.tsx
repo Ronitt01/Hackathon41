@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { after } from "next/server";
 import { Suspense } from "react";
 import { ChevronLeft } from "lucide-react";
 import { TripAside, TripAsideSkeleton } from "@/components/trip-aside/aside";
 import { TripPaint, TripRail, TripTabs } from "@/components/trip-tabs";
+import { maybeAutoPlan } from "@/lib/auto-plan";
 import { createClient } from "@/lib/supabase/server";
 
 const day = new Intl.DateTimeFormat("en-IN", { day: "numeric", timeZone: "UTC" });
@@ -30,6 +32,8 @@ export default async function TripLayout({ children, params }: { children: React
     supabase.from("members").select("id", { count: "exact", head: true }).eq("trip_id", id).neq("status", "dropped"),
   ]);
   if (!trip) notFound();
+  // Whoever opens the trip next moves it along: makes the fair plan once every budget is in or the "plan by" date passes.
+  after(() => maybeAutoPlan(trip.id).catch((err) => console.error("auto plan failed", err)));
   const when = dateRange(trip.start_date, trip.end_date);
   const who = (count ?? 1) <= 1 ? "Just you" : `${count} friends`;
   const meta = when ? `${when} · ${who}` : who;

@@ -58,6 +58,9 @@ export default async function PlanPage({
     ? Math.min(14, Math.max(1, Math.round((Date.parse(trip.end_date) - Date.parse(trip.start_date)) / 86_400_000) + 1))
     : DEFAULT_TRIP_DAYS;
   const isOrganizer = me?.role === "organizer";
+  // Its own read: before migration 0003 the column is missing, and the rest of the page must still load.
+  const { data: planByRow, error: planByError } = await supabase.from("trips").select("plan_by").eq("id", id).maybeSingle();
+  const planBy = planByError ? undefined : (planByRow?.plan_by ?? null);
   const isActive = !!me && me.status !== "dropped";
 
   return (
@@ -95,7 +98,7 @@ export default async function PlanPage({
           <h2 id="trip-details" className="text-[17px] leading-snug font-bold">Trip details</h2>
           <p className="text-[13px] text-muted-foreground">Where and when.</p>
         </div>
-        <TripDetails trip={trip} isOrganizer={isOrganizer} />
+        <TripDetails trip={trip} isOrganizer={isOrganizer} planBy={planBy} />
       </section>
 
       {isActive && (

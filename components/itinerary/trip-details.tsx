@@ -13,9 +13,13 @@ type Details = { id: string; destination: string | null; start_date: string | nu
 
 const longDate = new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
 const show = (date: string | null) => (date ? longDate.format(new Date(`${date}T00:00:00Z`)) : "Not set");
+const planDay = new Intl.DateTimeFormat("en-IN", { weekday: "short", day: "numeric", month: "short", timeZone: "Asia/Kolkata" });
+/** "2026-11-28" in India for a date input, from the stored timestamp. */
+const istDate = (iso: string) => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(new Date(iso));
 
 /** Destination and dates: organizers edit, everyone else reads. */
-export function TripDetails({ trip, isOrganizer }: { trip: Details; isOrganizer: boolean }) {
+/** `planBy`: when Kafila makes the fair plan by itself; undefined hides it (database not updated yet). */
+export function TripDetails({ trip, isOrganizer, planBy }: { trip: Details; isOrganizer: boolean; planBy?: string | null }) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [pending, setPending] = useState(false);
@@ -28,9 +32,12 @@ export function TripDetails({ trip, isOrganizer }: { trip: Details; isOrganizer:
     const start_date = String(form.get("start") ?? "") || null;
     const end_date = String(form.get("end") ?? "") || null;
     if (start_date && end_date && end_date < start_date) return setError("The trip can't end before it starts.");
+    const planByDay = String(form.get("planBy") ?? "");
     setPending(true);
     setError(null);
-    const { error } = await createClient().from("trips").update({ destination, start_date, end_date }).eq("id", trip.id);
+    const update: Record<string, string | null> = { destination, start_date, end_date };
+    if (planBy !== undefined) update.plan_by = planByDay ? `${planByDay}T18:00:00+05:30` : null; // 6 pm that day in India
+    const { error } = await createClient().from("trips").update(update).eq("id", trip.id);
     setPending(false);
     if (error) return setError(errorMessage(error));
     setEditing(false);
@@ -47,6 +54,12 @@ export function TripDetails({ trip, isOrganizer }: { trip: Details; isOrganizer:
           <dd className="tabular font-semibold">{show(trip.start_date)}</dd>
           <dt className="text-[13px] leading-[22px] text-muted-foreground">To</dt>
           <dd className="tabular font-semibold">{show(trip.end_date)}</dd>
+          {planBy !== undefined && (
+            <>
+              <dt className="text-[13px] leading-[22px] text-muted-foreground">Plan by</dt>
+              <dd className="tabular font-semibold">{planBy ? planDay.format(new Date(planBy)) : "When everyone's in"}</dd>
+            </>
+          )}
         </dl>
         {isOrganizer && (
           <Button variant="outline" className="bg-card" onClick={() => setEditing(true)}>
@@ -74,6 +87,13 @@ export function TripDetails({ trip, isOrganizer }: { trip: Details; isOrganizer:
           <Input id="end" name="end" type="date" defaultValue={trip.end_date ?? ""} className="h-11" />
         </div>
       </div>
+      {planBy !== undefined && (
+        <div className="grid gap-2">
+          <Label htmlFor="planBy">Make the fair plan by</Label>
+          <Input id="planBy" name="planBy" type="date" defaultValue={planBy ? istDate(planBy) : ""} aria-describedby="planBy-hint" className="h-11" />
+          <p id="planBy-hint" className="text-[13px] text-muted-foreground">Kafila makes it that evening with whoever&apos;s budget is in, or sooner once everyone&apos;s is. Leave blank to wait for everyone.</p>
+        </div>
+      )}
       <div className="flex gap-2">
         <Button type="submit" disabled={pending} className="flex-1">{pending ? "Saving…" : "Save"}</Button>
         <Button type="button" variant="outline" onClick={() => setEditing(false)} className="bg-card">Cancel</Button>
