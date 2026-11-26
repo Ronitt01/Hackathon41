@@ -55,3 +55,7 @@ supabase/.branches
 # taste-skill check artifacts
 .taste-skill/
 shots/
+
+# Demo video (large, not source)
+/kafila-demo-*.webm
+/kafila-demo-*.mp4
