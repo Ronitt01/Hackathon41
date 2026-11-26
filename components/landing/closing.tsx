@@ -52,6 +52,9 @@ export function Closing() {
                   {l.label}
                 </a>
               ))}
+              <Link href="/tour" className={NAV_LINK}>
+                Take the tour
+              </Link>
               <Link href="/start" className={NAV_LINK}>
                 My trips
               </Link>
